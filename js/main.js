@@ -1,6 +1,5 @@
 "use strict";
 
-
 var botToken = "";
 var updateOffset = -1;
 var updateAnalyzer;
@@ -13,6 +12,7 @@ var botUsername = "";
 var knownChatIDs = {};
 var botInfo;
 var debug = false;
+var startTime = 0;
 
 String.prototype.splitTwo = function(by) {
   var arr = this.split(by);
@@ -82,7 +82,7 @@ $(document).ready(function() {
     if(botToken != "" && botToken) {
       $("#startBot").prop("disabled", true);
       log("Avviando il bot... Connessione in corso ai server telegram...", "[INFO]", "blue-text");
-      setTimeout(updateAnalyzer, 0);
+      updateAnalyzer();
     } else {
       log("Bot non avviato! Bot token vuoto!", "[ERRORE]", "red-text");
     }
@@ -178,6 +178,9 @@ function updateCommands(doLog = true) {
   if(doLog) log("Aggiornamento lista comandi completato!", "[INFO]", "green-text");
   $("#updateCommands").prop("disabled", false);
 }
+function htmlEncode(string) {
+  return $("<div>").text(string).html();
+}
 function updateAnalyzer() {
   request("getUpdates",{
       offset: updateOffset
@@ -190,13 +193,15 @@ function updateAnalyzer() {
         return true;
       } else setTimeout(updateAnalyzer, ($("#ufUpdAnalyzer").prop("checked")) ? 0 : 500);
       if(response["result"] !== [] && response["result"] && response["result"].length > 0) {
+        if(debug) {
+          log("Received update "+htmlEncode(JSON.stringify(response)), "[DEBUG]");
+          startTime = (new Date).getTime();
+          log("Start Time: "+startTime, "[DEBUG]");
+        }
         update = response["result"][0];
         updateOffset = update["update_id"];
-        setTimeout(function() {
-          analyzeUpdate(update);
-        }, 0);
+        analyzeUpdate(update);
         updateOffset++;
-        if(debug) log("Received update "+$("<div>").text(JSON.stringify(response)).html(), "[DEBUG]");
       }
       if(started == 0) {
         localStorage.setItem("botToken", $("#token").val());
@@ -207,21 +212,29 @@ function updateAnalyzer() {
           request("getMe", {}, function(response) {
             botInfo = response["result"];
             botUsername = botInfo["username"];
-            log("Info Bot:<br>Nome: "+$("<div>").text(botInfo["first_name"]).html()+"<br>Username: <a href=\"https://t.me/"+botUsername+"\">@"+botUsername+"</a>");
+            log("Info Bot:<br>Nome: "+htmlEncode(botInfo["first_name"])+"<br>Username: <a href=\"https://t.me/"+botUsername+"\">@"+botUsername+"</a>");
           });
         }, 0);
         started = 1;
       }
     }, function(xhr) {
     var response = xhr.responseText;
-    log("Errore nella connessione: "+response+"<br />Possibile token errato.", "[ERRORE]", "red-text");
+    var json = JSON.parse(xhr.responseText);
+    var errormsg = "Errore sconosciuto"
+    if (json["error_code"] == 403 || json["error_code"] == 404) errormsg = "Possibile token errato o non valido"
+    else if (json["error_code"] == 409) errormsg = "Possibile conflitto"
+    log("Errore nella connessione: "+response+"<br />"+errormsg, "[ERRORE]", "red-text");
     $("#stopBot").prop("disabled", true);
     $("#startBot").prop("disabled", false);
     started = 0;
   });
 }
 function updateBotSettings() {
-  if (botToken != "" && botToken)
+  if (botToken != "" && botToken) {
+    if(debug) {
+      log("Updating bot settings...", "[DEBUG]");
+      var stTime = (new Date).getTime();
+    }
     localStorage.setItem("botSettings", JSON.stringify({
       parseMode: $("#parseMode").val(),
       wpPreview: $("#wpPreview").val(),
@@ -231,7 +244,8 @@ function updateBotSettings() {
       selectedChatId: selectedChatId,
       knownChatIDs: JSON.stringify(knownChatIDs),
     }));
-    if(debug) log("Updated bot settings", "[DEBUG]");
+    if(debug) log("Updated bot settings<br />Response time: "+((new Date).getTime() - stTime)+"ms", "[DEBUG]");
+  }
 }
 function analyzeUpdate(update) {
   var text = "";
@@ -244,7 +258,10 @@ function analyzeUpdate(update) {
   var last_name;
   var first_name;
   var user_id = 0;
-  if(debug) log("Analysing update: "+$("<div>").text(JSON.stringify(update)).html(), "[DEBUG]");
+  if(debug) {
+    log("Analysing update: "+htmlEncode(JSON.stringify(update)), "[DEBUG]");
+    
+  }
   if ("message" in update)
     message = update["message"];
   else
@@ -282,9 +299,9 @@ function analyzeUpdate(update) {
   } else if ("photo" in message) {
     var maxPhotoSize = message["photo"][(message["photo"].length - 1)]["file_id"];
     var caption = message["caption"];
-    request("getFile", { file_id: maxPhotoSize }, function(response) {
+    (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: maxPhotoSize }, function(response) {
       var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
-      log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? ($("<div>").text(chat_title).html() + ": ") : "")+$("<div>").text(name).html()+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
     }, function(xhr) {
       if(xhr.responseText) log(xhr.responseText, "[ERRORE]", "red-text")
     });
@@ -294,7 +311,7 @@ function analyzeUpdate(update) {
   }
   if(selectedChatId == chat_id || $("#logAllMsg").prop("checked")) {
     if(text)
-      log($("<div>").text(text).html(), "["+(is_group ? ($("<div>").text(chat_title).html() + ": ") : "")+$("<div>").text(name).html()+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      log(htmlEncode(text), "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
   }
   knownChatIDs[chat_id] = chat_name;
   var find = [
@@ -310,30 +327,31 @@ function analyzeUpdate(update) {
   var replace = [
     chat_id,
     user_id,
-    ($("#parseMode").val() == "HTML") ? $("<div>").text(chat_name).html() : chat_name,
-    ($("#parseMode").val() == "HTML") ? $("<div>").text(name).html() : name,
-    ($("#parseMode").val() == "HTML") ? $("<div>").text(first_name).html() : first_name,
-    ($("#parseMode").val() == "HTML") ? $("<div>").text(last_name).html() : last_name,
+    ($("#parseMode").val() == "HTML") ? htmlEncode(chat_name) : chat_name,
+    ($("#parseMode").val() == "HTML") ? htmlEncode(name) : name,
+    ($("#parseMode").val() == "HTML") ? htmlEncode(first_name) : first_name,
+    ($("#parseMode").val() == "HTML") ? htmlEncode(last_name) : last_name,
     text,
-    $("<div>").text(text).html()
+    htmlEncode(text)
   ];
   if(caption == "/fileid") {
     sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", false, "HTML");
   }
   if(text in commands && text != "") {
-    for(var ind in commands[text]) {
-      var send_text = commands[text][ind].replaceArray(find, replace);
-      if(debug) log("Text to send: "+$("<div>").text(send_text).html(), "[DEBUG]");
+    for(var ind of commands[text]) {
+      var send_text = ind.replaceArray(find, replace);
+      if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
       sendMessage(chat_id, send_text);
     }
   }
   if ("any" in commands) {
     for(var ind in commands["any"]) {
       var send_text = commands["any"][ind].replaceArray(find, replace);
-      if(debug) log("Text to send: "+$("<div>").text(send_text).html(), "[DEBUG]");
+      if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
       sendMessage(chat_id, send_text);
     }
   }
+  if (debug) log("Response Time: "+((new Date).getTime() - startTime)+"ms", "[DEBUG]");
 }
 function sendMessage(chat_id, messageText, doLog = false, parse_mode = false, disable_web_page_preview = false) {
   if(!parse_mode) parse_mode = $("#parseMode").val();
@@ -407,7 +425,7 @@ function sendCommand(command) {
           else {
             var opts = "";
             for(var chatId in knownChatIDs) {
-              opts += "<option value=\""+chatId+"\""+((chatId == selectedChatId) ? " selected" : "")+">"+$("<div>").text(knownChatIDs[chatId]).html()+"</option>";
+              opts += "<option value=\""+chatId+"\""+((chatId == selectedChatId) ? " selected" : "")+">"+htmlEncode(knownChatIDs[chatId])+"</option>";
             }
             $("#selectChatId").html(opts).formSelect();
             $("#selectChatIdModal").modal("open");
