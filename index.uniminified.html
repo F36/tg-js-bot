@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, shrink-to-fit=no" />
+    <!-- Tags for search engines -->
+    <meta name="author" content="ItzPatoo">
+    <meta name="og:title" content="Easy Telegram bot in JS">
+    <meta name="og:description" content="Con questo sito puoi creare facilmente un bot telegram con il semplicissimo utilizzo del tuo browser! presente anche la console per inviare messaggi e riceverli!">
+    <meta name="description" content="Con questo sito puoi creare facilmente un bot telegram con il semplicissimo utilizzo del tuo browser! presente anche la console per inviare messaggi e riceverli!">
+    <meta name="application-name" content="Easy Telegram bot in JS">
+    <meta name="keywords" content="TelegramBotJS JSTelegramBot TelegramBot Telegram Bot Javascript">
+    <meta name="msvalidate.01" content="ADB52CE29F47DB2CAC8C8CA03E19D6F2" />
+    <meta name="google-site-verification" content="G6L1GP4TRLb_GtzjCEp_BdXKVolnBiQQh4deUUKHyis" />
+    <!-- End -->
+
+    <!-- Tags for mobile add to home -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="TelegramJSBot">
+    <meta name="apple-mobile-web-app-title" content="TelegramJSBot">
+    <meta name="theme-color" content="#1e88e5">
+    <meta name="msapplication-navbutton-color" content="#1e88e5">
+    <meta name="apple-mobile-web-app-status-bar-style" content="blue">
+    <meta name="msapplication-starturl" content="/tg-js-bot/">
+    <link rel="manifest" href="manifest.webapp.json">
+    <!-- End -->
+
+    <title>Telegram JS Easy Bot</title>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" as="style">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="preload" as="style">
+    <link rel="preload" href="css/default.min.css" as="style">
+    <link rel="preload" href="../css/default.css" as="style">
+    <link rel="icon" href="icons/logo-128.png" sizes="128x128" type="image/png">
+    <link rel="icon" href="icons/logo-64.png" sizes="64x64" type="image/png">
+    <link rel="icon" href="icons/logo-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="icons/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/default.css">
+    <link rel="stylesheet" href="../css/default.css">
+    <noscript><link rel="stylesheet" href="/css/noscript.min.css"></noscript>
+  </head>
+  <body>
+    <div id="loader"></div>
+    <div id="nojs">Please enable Javascript.</div>
+    <main>
+      <nav class="blue darken-1">
+        <div class="nav-wrapper">
+          <a href="#" class="brand-logo center">Easy JS Bot</a>
+          <a href="#" data-target="sidebar-slide" class="sidenav-trigger right"><i class="material-icons">menu</i></a>
+        </div>
+      </nav>
+      <div class="container">
+        <div class="card-panel">
+          <div class="row">
+            <i class="material-icons right tooltipped black-text"
+              data-tooltip="Inserisci qui il token che ti è stato inviato da @BotFather su Telegram"
+              data-position="bottom">help_outline</i>
+            <div class="input-field col s12">
+              <input id="token" type="text" class="validate" required>
+              <label for="token">Token del bot</label>
+            </div>
+          </div>
+          <div class="row">
+            <a class="modal-trigger" href="#helpCommands"><i class="material-icons right black-text">help_outline</i></a>
+            <div class="input-field col s12">
+              <textarea id="commands" class="materialize-textarea"></textarea>
+              <label for="commands">Comandi del bot</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s6">
+              <select id="parseMode">
+                <option value="" selected>None</option>
+                <option value="HTML">HTML</option>
+                <option value="Markdown">Markdown</option>
+              </select>
+              <label for="parseMode">Parse Mode</label>
+            </div>
+            <div class="input-field col s6">
+              <select id="wppreview">
+                <option value="false" selected>No</option>
+                <option value="true">Yes</option>
+              </select>
+              <label for="wppreview">Disable Web Page preview</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col s12">
+              <label>Console</label>
+              <div id="consoleContainer">
+                <div id="console"></div>
+                <div id="consoleCommandsContainer">
+                  <span id="consoleSymbol">&gt;</span>
+                  <input id="consoleCommands" class="browser-default" type="text" data-length="4096">
+                  <button id="consoleCommandsGo"><i class="material-icons">send</i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col s12">
+              <button class="btn blue waves-effect waves-light" id="updateCommands" style="display: none;">Aggiorna lista comandi</button>
+              <button class="btn blue waves-effect waves-light" id="startBot">Avvia!</button>
+              <button class="btn blue waves-effect waves-light" id="stopBot" disabled>Arresta</button>
+            </div>
+          </div>
+          <div class="row botSettings">
+            <div class="col s12">
+              <div class="switch">
+                <label for="autoStart">Avvia automaticamente il bot al caricamento della pagina</label>
+                <label>
+                  <input type="checkbox" id="autoStart">
+                  <span class="lever"></span>
+                </label>
+              </div><br />
+              <div class="switch">
+                <label for="logAllMsg">Logga i messaggi da qualsiasi chat</label>
+                <label>
+                  <input type="checkbox" id="logAllMsg">
+                  <span class="lever"></span>
+                </label>
+              </div><br />
+              <div class="switch tooltipped" data-tooltip="Non consigliato su computer lenti, rimuove il timeout di 500 millisecondi nell'update analyzer." data-position="top">
+                <label for="ufUpdAnalyzer">Ultra fast update analyzer</label>
+                <label>
+                  <input type="checkbox" id="ufUpdAnalyzer">
+                  <span class="lever"></span>
+                </label>
+              </div><br />
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="page-footer blue darken-1">
+        <div class="container">
+          <div class="row">
+            <h4 class="left">EasyJSBot</h4>
+            <h4 class="right">
+              <a class="waves-effect waves-light white-text" href="https://github.com/Pato05/tg-js-bot">
+                GitHub
+              </a>
+            </h4>
+          </div>
+          <div class="row">
+            <span class="left" style="font-size: 20px">Creato da Pato05 <code>:)</code></span>
+          </div>
+        </div>
+        <div class="footer-copyright blue darken-3">
+          <div class="container">
+            <span>&copy; 2019 Pato05 e <a class="white-text" href="https://github.com/peppelg">Peppelg</a> EasyJSBot</span>
+            <a href="LICENSE" class="waves-effect waves-light right white-text">LICENSE</a>
+            <p class="grey-text darken-1">Remastered version of <a class="grey-text darken-1" href="https://github.com/peppelg"><u>Peppelg</u></a>'s <a class="grey-text darken-1" href="https://peppelg.github.io/Telegram-bot-creator/"><u>bot creator</u></a>.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+    <ul id="sidebar-slide" class="sidenav sidenav-fixed">
+      <li><a class="waves-effect" href="/"><i class="material-icons left">home</i>Home</a></li>
+      <li class="active"><a class="waves-effect" href="/tg-js-bot"><i class="material-icons left">sms</i>Easy Telegram Bot</a></li>
+      <li><a class="waves-effect" href="/PatoBot"><i class="material-icons left">code</i>PatoBot</a></li>
+    </ul>
+    <div class="modal modal-fixed-footer" id="helpCommands">
+      <div class="modal-content">
+        <h4>Help comandi</h4>
+        <p>
+          /comando > Risposta<strong>;</strong><br>
+          Nella risposta, puoi usare <strong>photo file_id/url</strong> per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>
+          Saranno aggiunti altri tipi di documenti/video presto.<br>
+          Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid
+          <br><br>
+          Nella risposta testuale puoi usare i seguenti codici:<br>
+          <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>
+          <br>
+          <code>{CHATID}</code>: ID della chat<br>
+          <code>{USERID}</code>: ID utente<br>
+          <code>{CHATTITLE}</code>: Nel caso di un gruppo, il nome del gruppo, altrimenti il nome completo dell'utente<br>
+          <code>{NAME}</code>: Nome completo dell'utente<br>
+          <code>{FIRSTNAME}</code>: Nome dell'utente<br>
+          <code>{LASTNAME}</code>: Cognome dell'utente<br>
+          <code>{MSGTEXT}</code>: Testo messaggio inviato.<br>
+          <code>{HTMLESCAPEDMSGTEXT}</code>: Testo messaggio inviato escapato da HTML.
+          <br><br>
+          Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-light btn-flat">OK</a>
+      </div>
+    </div>
+    <div class="modal modal-fixed-footer" id="selectChatIdModal">
+      <div class="modal-content">
+        <h4>Seleziona la chat_id</h4>
+        <div class="input-fiels col s12">
+          <select id="selectChatId">
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" id="removeChatId" class="modal-close waves-effect waves-red btn-flat">Rimuovi selezione</a>
+        <a href="#!" id="applyChatId" class="modal-close waves-effect waves-green btn-flat">OK</a>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" defer></script>
+    <script src="js/main.min.js" defer></script>
+    <script src="../js/main.js" defer></script>
+  </body>
+</html>
