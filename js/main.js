@@ -13,7 +13,136 @@ var knownChatIDs = {};
 var botInfo;
 var debug = false;
 var startTime = 0;
-
+var logTranslations = {
+  "itIT": {
+    "startingBot": "Avviando il bot... Connessione in corso ai server telegram...",
+    "emptyToken": "Bot non avviato! Bot token vuoto!",
+    "stopSent": "Richiesta di arresto inviata!",
+    "autoStart": "Bot in avvio secondo le tue impostazioni...",
+    "userDidntStartBot": "L'utente selezionato precedentemente ha bloccato il bot o non lo ha mai avviato.",
+    "unknownError": "Errore sconosciuto: ",
+    "autoSelectCID1": "Selezionata chat ",
+    "autoSelectCID2": " come da sessione precedente.",
+    "updatingCommands": "Aggiornamento lista comandi in corso...",
+    "updatedCommands": "Aggiornamento lista comandi completato!",
+    "botStopped": "Bot arrestato!",
+    "botStarted": "Bot avviato! Attenzione: Se chiudi questa pagina, verrà anche arrestato il tuo bot!",
+    "helpCmd": "/help per i comandi della console.",
+    "botInfo": "Info Bot:<br>Nome: {BOTNAME}<br>Username: {TMEBOTUSERNAME}",
+    "wrongToken": "Token errato o non valido",
+    "conflict": "Conflitto, il bot ha il webhook già settato, oppure qualche altro programma è sul bot",
+    "connectionError": "Errore nella connessione: ",
+    "messageNotSupported": "Messaggio non supportato",
+    "sendMessageError": "Errore nell'invio del messaggio: ",
+    "helpConsoleCommands": "Menù comandi:<br />/help: visualizza questo menù di aiuto<br />/select: GUI per selezionare la chat in cui inviare i messaggi<br />&lt;messaggio&gt;: invia messaggio nella chat_id selezionata",
+    "removedChatIdSelection": "Rimossa selezione chat_id!",
+    "selected": "Selezionato ",
+    "noKnownChats": "Nessun chat_id conosciuto. Impossibile mostrare la GUI. Seleziona un chat_id manualmente con /select &lt;chat_id&gt;",
+    "unknownCommand": "Comando sconosciuto. /help per una lista completa di comandi.",
+    "messageTooLong": "Messaggio troppo lungo. Caratteri massimi consentiti: 4096 caratteri.",
+    "emptyMessage": "Messaggio nullo.",
+    "noChatSelected": "Per favore, prima di tentare di inviare un messaggio, usa /select",
+    "consoleBotNotStarted": "Prima di scrivere comandi, perfavore, metti il token del bot. Se lo hai già fatto, assicurati di aver avviato il bot cliccando il pulsante \"Avvia\"",
+    "messageSent": "Messaggio inviato: ",
+    "logError": "[ERRORE]"
+  },
+  "en": {
+    "startingBot": "Starting the bot... Connecting to telegram servers...",
+    "emptyToken": "Bot not started! Bot token empty!",
+    "stopSent": "Stop request sent!",
+    "autoStart": "Starting the bot according to your settings...",
+    "userDidntStartBot": "The user previously selected has blocked the bot or he hasn't started it at all.",
+    "unknownError": "Unknown error: ",
+    "autoSelectCID1": "Selected chat ",
+    "autoSelectCID2": " as previous session.",
+    "updatingCommands": "Updating commands list...",
+    "updatedCommands": "Commands list updated!",
+    "botStopped": "Bot stopped!",
+    "botStarted": "Bot started! Warning: If you close this page, your bot will be stopped too!",
+    "helpCmd": "/help for the console commands.",
+    "botInfo": "Bot Info:<br>Name: {BOTNAME}<br>Username: {TMEBOTUSERNAME}",
+    "wrongToken": "Wrong token or token not valid",
+    "conflict": "Conflict, the bot has already setted webhook, or some other program is on the bot",
+    "connectionError": "Connection error: ",
+    "messageNotSupported": "Messsage not supported",
+    "sendMessageError": "Message sending error: ",
+    "helpConsoleCommands": "Commands menù:<br />/help: shows this help menu<br />/select: GUI to select chat to send messages in<br />&lt;messaggio&gt;: send message in selected chat",
+    "removedChatIdSelection": "Removed chat_id selection!",
+    "selected": "Selected ",
+    "noKnownChats": "No known chat_id. Unable to show the GUI. Select a chat_id manually with /select &lt;chat_id&gt;",
+    "unknownCommand": "Unknown command. /help for a commands list.",
+    "messageTooLong": "Message too long. Maximum allowed characters: 4096 characters.",
+    "emptyMessage": "Message empty.",
+    "noChatSelected": "Please, before trying to send a message, use /select",
+    "consoleBotNotStarted": "Before typing commands, enter the bot token. If you have already done it, make sure you've clicked the \"Start\" button",
+    "messageSent": "Message sent",
+    "logError": "[ERROR]"
+  }
+}
+var translations = {
+  "itIT": {
+    "commandsHelpTr": '/comando > Risposta<strong>;</strong><br>\
+    Nella risposta, puoi usare <strong>photo</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
+    Saranno aggiunti altri tipi di documenti/video presto.<br>\
+    Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid\
+    <br><br>\
+    Nella risposta testuale puoi usare i seguenti codici:<br>\
+    <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>\
+    <br>\
+    <code>{CHATID}</code>: ID della chat<br>\
+    <code>{USERID}</code>: ID utente<br>\
+    <code>{CHATTITLE}</code>: Nel caso di un gruppo, il nome del gruppo, altrimenti il nome completo dell\'utente<br>\
+    <code>{NAME}</code>: Nome completo dell\'utente<br>\
+    <code>{FIRSTNAME}</code>: Nome dell\'utente<br>\
+    <code>{LASTNAME}</code>: Cognome dell\'utente<br>\
+    <code>{MSGTEXT}</code>: Testo messaggio inviato.<br>\
+    <code>{HTMLESCAPEDMSGTEXT}</code>: Testo messaggio inviato escapato da HTML.\
+    <br><br>\
+    Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.',
+    "tr-botToken": "Token del bot",
+    "tr-botcommands": "Comandi del bot",
+    "startBot": "Avvia!",
+    "stopBot": "Arresta",
+    "tr-autostart": "Avvia automaticamente il bot al caricamento della pagina",
+    "tr-logallmsg": "Logga i messaggi da qualsiasi chat",
+    "tr-createdby": "Creato da Pato05 <code>:)</code>",
+    "tr-cmdHelpTitle": "Help comandi",
+    "selectChId": "Seleziona la chat_id",
+    "removeChatId": "Rimuovi selezione"
+  },
+  "en": {
+    "tr-botToken": "Bot Token",
+    "tr-botcommands": "Bot commands",
+    "startBot": "Start!",
+    "stopBot": "Stop",
+    "tr-autostart": "Automatically start the bot at page load",
+    "tr-logallmsg": "Log messages from every chat",
+    "tr-createdby": "Created by Pato05 <code>:)</code>",
+    "tr-cmdHelpTitle": "Commands Help",
+    "selectChId": "Select the chat_id",
+    "removeChatId": "Remove selection",
+    "commandsHelpTr": '/command > Answer<strong>;</strong><br>\
+    In the answer, you can use <strong>photo</strong> followed by <strong>file_id/url</strong> (to put the caption to a photo, start a new line) to send a photo, or a simple text to send a textual answer.<br>\
+    Will be added new types of documents/videos soon<br>\
+    To get a photo file_id, send a photo to your active bot with caption /fileid\
+    <br><br>\
+    In the textual answer or caption you can use these codes:<br>\
+    <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>\
+    <br>\
+    <code>{CHATID}</code>: Chat ID<br>\
+    <code>{USERID}</code>: User ID<br>\
+    <code>{CHATTITLE}</code>: In the case of a group, the group title, else the complete user\'s name<br>\
+    <code>{NAME}</code>: Complete user\'s name<br>\
+    <code>{FIRSTNAME}</code>: User\'s first name<br>\
+    <code>{LASTNAME}</code>: User\'s last name<br>\
+    <code>{MSGTEXT}</code>: Text of the message sent by the user<br>\
+    <code>{HTMLESCAPEDMSGTEXT}</code>: Text of the message sent by the user HTML escaped.\
+    <br><br>\
+    Putting <code>any</code> as command, it will answer to each message.'
+  }
+}
+var navLang = navigator.userLanguage || navigator.language;
+var l = logTranslations[navLang] || logTranslations["en"];
 String.prototype.splitTwo = function(by) {
   var arr = this.split(by);
   var str = this.substr(arr[0].length + by.length);
@@ -28,7 +157,7 @@ String.prototype.replaceArray = function(find, replace) {
   }
   return replaceString;
 };
-function log(text, prefix = "[INFO]", classes = "white-text") {
+async function log(text, prefix = "[INFO]", classes = "white-text") {
   var consoleElem = $("#console");
   var newSpan = $("<span>");
   newSpan.attr("class", classes)
@@ -38,7 +167,7 @@ function log(text, prefix = "[INFO]", classes = "white-text") {
   consoleElem.append("<br>");
   consoleElem.scrollTop(consoleElem[0].scrollHeight - consoleElem.height());
 }
-$(document).ready(function() {
+$(document).ready(async function() {
   if (location.href.indexOf("#") != -1) {
     var hash = location.href.substr(location.href.indexOf("#")+1);
     if(hash == "debug=1") {
@@ -46,10 +175,17 @@ $(document).ready(function() {
       setTimeout(function(){log("DEBUG mode enabled", "[DEBUG]")}, 0);
     }
   }
-  $("#applyChatId").on("click", function() {
+  if(navLang in translations) {
+    for(var [idelem, value] of Object.entries(translations[navLang])) {
+      $("#"+idelem).html(value);
+    }
+  } else for(var [idelem, value] of Object.entries(translations["en"])) {
+    $("#"+idelem).html(value);
+  }
+  $("#applyChatId").on("click", async function() {
     sendCommand("/select "+$("#selectChatId").val());
   });
-  $("#removeChatId").on("click", function() {
+  $("#removeChatId").on("click", async function() {
     sendCommand("/select 0");
   });
   $("#autoStart").on("change", updateBotSettings);
@@ -64,13 +200,13 @@ $(document).ready(function() {
     sendCommand(commandI.val());
     commandI.val("");
   });
-  $("#consoleCommands").focus(function() {
+  $("#consoleCommands").focus(async function() {
     $("#consoleCommandsContainer").css("background", "rgb(15, 15, 15)");
   });
-  $("#consoleCommands").blur(function() {
+  $("#consoleCommands").blur(async function() {
     $("#consoleCommandsContainer").css("background", "#000");
   });
-  $("#consoleCommands").keyup(function(e) {
+  $("#consoleCommands").keyup(async function(e) {
     if(e.keyCode == 13) {
       $("#consoleCommandsGo").click();
     } else if(e.keyCode == 38) {
@@ -81,23 +217,23 @@ $(document).ready(function() {
     botToken = $("#token").val();
     if(botToken != "" && botToken) {
       $("#startBot").prop("disabled", true);
-      log("Avviando il bot... Connessione in corso ai server telegram...", "[INFO]", "blue-text");
+      log(l["startingBot"], "[INFO]", "blue-text");
       updateAnalyzer();
     } else {
-      log("Bot non avviato! Bot token vuoto!", "[ERRORE]", "red-text");
+      log(l["emptyToken"], l["logError"], "red-text");
     }
   });
-  $("#stopBot").click(function() {
+  $("#stopBot").click(async function() {
     started = "stop";
     $("#stopBot").prop("disabled", true);
-    log("Richiesta di arresto inviata!", "[INFO]", "yellow-text");
+    log(l["stopSent"], "[INFO]", "yellow-text");
   });
-  $("#commands").blur(function() {
+  $("#commands").blur(async function() {
     updateCommands(true);
   });
   $("#updateCommands").click(updateCommands);
   if("commands" in cookies) {
-    $("#commands").val(cookies["commands"].split("///////////").join("\n"));
+    $("#commands").val(cookies["commands"]);
   } else $("#commands").val("/start > Messaggio di avvio!;\n/help > Menù di aiuto!;");
   if("botToken" in cookies) {
     $("#token").val(cookies["botToken"]);
@@ -113,11 +249,11 @@ $(document).ready(function() {
       $("#autoStart").prop("checked", bSettings["autoStart"]);
       if(bSettings["autoStart"] == true) {
         setTimeout(function() {
-          log("Bot in avvio secondo le tue impostazioni...", "[INFO]", "yellow-text");
+          log(l["autoStart"], "[INFO]", "yellow-text");
           if (botToken != "" && botToken) {
             $("#startBot").click();
           } else {
-            log("Bot token vuoto.", "[ERRORE]", "red-text");
+            log(l["emptyToken"], l["logError"], "red-text");
             $("#autoStart").prop("checked", false);
             updateBotSettings();
           }
@@ -131,23 +267,23 @@ $(document).ready(function() {
     if ("ufUpdAnalyzer" in bSettings)
       $("#ufUpdAnalyzer").prop("checked", bSettings["ufUpdAnalyzer"]);
     if ("selectedChatId" in bSettings && bSettings["selectedChatId"] != 0) {
-      setTimeout(function() {
+      setTimeout(async function() {
         selectedChatId = bSettings["selectedChatId"];
         if(!selectedChatId in knownChatIDs) {
           request("getChat", {chat_id: selectedChatId}, function(response) {
 
-          }, function(xhr) {
+          }, async function(xhr) {
             var response = JSON.parse(xhr.responseText);
             var err_code = response["error_code"];
             var desc = response["description"];
             if(err_code == 403) {
-              log("L'utente selezionato precedentemente ha bloccato il bot o non lo ha mai avviato.", "[ERRORE]", "red-text");
+              log(l["userDidntStartBot"], l["logError"], "red-text");
             } else {
-              log("Errore sconosciuto: "+JSON.stringify(response), "[ERRORE]", "red-text");
+              log(l["unknownError"]+JSON.stringify(response), l["logError"], "red-text");
             }
             selectedChatId = "";
           });
-        } else log("Selezionata chat "+knownChatIDs[selectedChatId]+" come da sessione precedente.", "[INFO]", "yellow-text");
+        } else log(l["autoSelectCID1"]+knownChatIDs[selectedChatId]+l["autoSelectCID2"], "[INFO]", "yellow-text");
       }, 0);
     }
   }
@@ -160,35 +296,44 @@ $(document).ready(function() {
   }, 0);
   updateCommands(false);
 });
-function updateCommands(doLog = true) {
+async function updateCommands(doLog = true) {
   $("#updateCommands").prop("disabled", true);
-  if(doLog) log("Aggiornamento lista comandi in corso...", "[INFO]", "yellow-text");
+  if(doLog) log(l["updatingCommands"], "[INFO]", "yellow-text");
   commands = {};
   var commandsString = $("#commands").val();
   var c = commandsString.split(/;$/gm);
   for(var command in c) {
     if(c[command].charAt(0) === "\n") c[command] = c[command].substr(1);
     var commandArr = c[command].splitTwo(" > ");
+    var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
+    if(photo) {
+      commandArr[1] = commandArr[1].splitTwo("photo ")[1];
+      var caption = "";
+      if(commandArr[1].indexOf("\n") -1 < commandArr[1].length) {
+        caption = commandArr[1].splitTwo("\n")[1];
+        commandArr[1] = commandArr[1].splitTwo(caption)[0];
+      }
+    }
     if(commandArr[0] in commands)
-      commands[commandArr[0]].push(commandArr[1]);
-    else
-      commands[commandArr[0]] = [commandArr[1]];
+      commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption] : [commandArr[1], "text"]));
+    else 
+      commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption]] : [[commandArr[1], "text"]];
   }
-  localStorage.setItem("commands", $("#commands").val().replace(/\n/g, "///////////"));
-  if(doLog) log("Aggiornamento lista comandi completato!", "[INFO]", "green-text");
+  localStorage.setItem("commands", $("#commands").val());
+  if(doLog) log(l["updatedCommands"], "[INFO]", "green-text");
   $("#updateCommands").prop("disabled", false);
 }
 function htmlEncode(string) {
   return $("<div>").text(string).html();
 }
-function updateAnalyzer() {
+async function updateAnalyzer() {
   request("getUpdates",{
       offset: updateOffset
-    }, function(response) {
+    }, async function(response) {
       var update = {};
       if(started == "stop") {
         $("#startBot").prop("disabled", false);
-        log("Bot arrestato!", "[INFO]", "blue-text");
+        log(l["botStopped"], "[INFO]", "blue-text");
         started = 0;
         return true;
       } else setTimeout(updateAnalyzer, ($("#ufUpdAnalyzer").prop("checked")) ? 0 : 500);
@@ -205,31 +350,37 @@ function updateAnalyzer() {
       }
       if(started == 0) {
         localStorage.setItem("botToken", $("#token").val());
-        log("Bot avviato! Attenzione: Se chiudi questa pagina, verrà anche arrestato il tuo bot!", "[INFO]", "blue-text");
-        log("/help per i comandi della console.");
+        log(l["botStarted"], "[INFO]", "blue-text");
+        log(l["helpCmd"]);
         $("#stopBot").prop("disabled", false);
-        setTimeout(function() {
-          request("getMe", {}, function(response) {
-            botInfo = response["result"];
-            botUsername = botInfo["username"];
-            log("Info Bot:<br>Nome: "+htmlEncode(botInfo["first_name"])+"<br>Username: <a href=\"https://t.me/"+botUsername+"\">@"+botUsername+"</a>");
-          });
-        }, 0);
+        request("getMe", {}, async function(response) {
+          botInfo = response["result"];
+          botUsername = botInfo["username"];
+          var find = [
+            "{BOTNAME}",
+            "{TMEBOTUSERNAME}"
+          ];
+          var replace = [
+            htmlEncode(botInfo["first_name"]),
+            "<a href=\"https://t.me/"+botUsername+"\">@"+botUsername+"</a>"
+          ]
+          log(l["botInfo"].replaceArray(find, replace));
+        });
         started = 1;
       }
-    }, function(xhr) {
+    }, async function(xhr) {
     var response = xhr.responseText;
     var json = JSON.parse(xhr.responseText);
     var errormsg = "Errore sconosciuto"
-    if (json["error_code"] == 403 || json["error_code"] == 404) errormsg = "Possibile token errato o non valido"
-    else if (json["error_code"] == 409) errormsg = "Possibile conflitto"
-    log("Errore nella connessione: "+response+"<br />"+errormsg, "[ERRORE]", "red-text");
+    if (json["error_code"] == 403 || json["error_code"] == 404) errormsg = l["wrongToken"]
+    else if (json["error_code"] == 409) errormsg = l["conflict"]
+    log(l["connectionError"]+response+"<br />"+errormsg, l["logError"], "red-text");
     $("#stopBot").prop("disabled", true);
     $("#startBot").prop("disabled", false);
     started = 0;
   });
 }
-function updateBotSettings() {
+async function updateBotSettings() {
   if (botToken != "" && botToken) {
     if(debug) {
       log("Updating bot settings...", "[DEBUG]");
@@ -247,7 +398,7 @@ function updateBotSettings() {
     if(debug) log("Updated bot settings<br />Response time: "+((new Date).getTime() - stTime)+"ms", "[DEBUG]");
   }
 }
-function analyzeUpdate(update) {
+async function analyzeUpdate(update) {
   var text = "";
   var message;
   var chat_id = 0;
@@ -273,7 +424,7 @@ function analyzeUpdate(update) {
       is_group = true;
     }
   } else {
-    log("Messaggio non supportato", "[WARNING]", "yellow-text");
+    log(l["messageNotSupported"], "[WARNING]", "yellow-text");
     return false;
   }
   if("from" in message) {
@@ -299,15 +450,15 @@ function analyzeUpdate(update) {
   } else if ("photo" in message) {
     var maxPhotoSize = message["photo"][(message["photo"].length - 1)]["file_id"];
     var caption = message["caption"];
-    (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: maxPhotoSize }, function(response) {
+    (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: maxPhotoSize }, async function(response) {
       var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
       log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
-    }, function(xhr) {
-      if(xhr.responseText) log(xhr.responseText, "[ERRORE]", "red-text")
+    }, async function(xhr) {
+      if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
     });
     text = "";
   } else {
-    text = "Messaggio non supportato!";
+    text = l["messageNotSupported"];
   }
   if(selectedChatId == chat_id || $("#logAllMsg").prop("checked")) {
     if(text)
@@ -339,9 +490,18 @@ function analyzeUpdate(update) {
   }
   if(text in commands && text != "") {
     for(var ind of commands[text]) {
-      var send_text = ind.replaceArray(find, replace);
-      if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
-      sendMessage(chat_id, send_text);
+      if(ind[1] == "text") {
+        var send_text = ind[0].replaceArray(find, replace);
+        if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
+        sendMessage(chat_id, send_text);
+      } else if(ind[1] == "photo") {
+        var caption = "";
+        if(2 in ind) {
+          caption = ind[2].replaceArray(find, replace);
+          if(debug) log("Caption to send: "+htmlEncode(caption), "[DEBUG]");
+        }
+        sendPhoto(chat_id, ind[0], caption);
+      }
     }
   }
   if ("any" in commands) {
@@ -353,47 +513,50 @@ function analyzeUpdate(update) {
   }
   if (debug) log("Response Time: "+((new Date).getTime() - startTime)+"ms", "[DEBUG]");
 }
-function sendMessage(chat_id, messageText, doLog = false, parse_mode = false, disable_web_page_preview = false) {
+async function sendMessage(chat_id, messageText, doLog = false, parse_mode = false, disable_web_page_preview = false) {
   if(!parse_mode) parse_mode = $("#parseMode").val();
   if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
-  if(messageText.indexOf("photo") == 0) {
-    var file_id = messageText.splitTwo(" ")[1];
+  if((chat_id == undefined || chat_id == "") && !chat_id) {
+    return false;
+  } else {
     var args = {
       chat_id: chat_id,
-      photo: file_id
+      text: messageText,
+      parse_mode: parse_mode,
+      disable_web_page_preview: disable_web_page_preview
     };
-    request("sendPhoto", args, function(response) {
-      if(doLog) request("getFile", { file_id: file_id }, function(response) {
-            var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
-            log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"></span>", "[Messaggio inviato: "+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
-          }, function(xhr) {
-            if(xhr.responseText) log(xhr.responseText, "[ERRORE]", "red-text")
-          });
-    }, function(xhr) {
+    request("sendMessage", args, async function(response) {
+      if(doLog) log(response["result"]["text"], "["+l["messageSent"]+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
+    }, async function(xhr) {
       var response = xhr.responseText;
-      log("Errore nell'invio del messaggio: "+response, "[ERRORE]", "red-text");
+      log(l["sendMessageError"]+response, l["logError"], "red-text");
     }, true);
-  } else {
-    if((chat_id == undefined || chat_id == "") && !chat_id) {
-      return false;
-    } else {
-      var args = {
-        chat_id: chat_id,
-        text: messageText,
-        parse_mode: parse_mode,
-        disable_web_page_preview: disable_web_page_preview
-      };
-      request("sendMessage", args, function(response) {
-        if(doLog) log(response["result"]["text"], "[Messaggio inviato: "+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
-      }, function(xhr) {
-        var response = xhr.responseText;
-        log("Errore nell'invio del messaggio: "+response, "[ERRORE]", "red-text");
-      }, true);
-      return true;
-    }
+    return true;
   }
 }
-function request(method, args = {}, successCb = function() {}, errorCb = function() {}, async = true) {
+async function sendPhoto(chat_id, photo, caption = "", doLog = false, parse_mode = false, disable_web_page_preview = false) {
+  if(!parse_mode) parse_mode = $("#parseMode").val();
+  if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
+  var args = {
+    chat_id: chat_id,
+    photo: photo,
+    caption: caption,
+    parse_mode = parse_mode,
+    disable_web_page_preview: disable_web_page_preview
+  };
+  request("sendPhoto", args, async function(response) {
+    if(doLog) request("getFile", { file_id: photo }, async function(response) {
+          var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
+          log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"></span>", "["+l["messageSent"]+": "+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
+        }, async function(xhr) {
+          if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
+        });
+  }, async function(xhr) {
+    var response = xhr.responseText;
+    log(l["sendMessageError"]+response, l["logError"], "red-text");
+  }, true);
+}
+async function request(method, args = {}, successCb = async function() {}, errorCb = async function() {}, async = true) {
   $.ajax({
     url: "https://api.telegram.org/bot" + botToken + "/"+method,
     async: async,
@@ -404,24 +567,24 @@ function request(method, args = {}, successCb = function() {}, errorCb = functio
     error: errorCb
   });
 }
-function sendCommand(command) {
+async function sendCommand(command) {
   if(botToken != "" && botToken && started == 1)
     switch(command.splitTwo(" ",1)[0]) {
       case "/help":
-        log("Menù comandi:<br />/help: visualizza questo menù di aiuto<br />/select: GUI per selezionare la chat in cui inviare i messaggi<br />&lt;messaggio&gt;: invia messaggio nella chat_id selezionata", "");
+        log(l["helpConsoleCommands"], "");
         break;
       case "/select":
         var cId = command.splitTwo(" ");
         if (1 in cId && cId[1]) {
           selectedChatId = cId[1];
           if (selectedChatId == 0)
-            log("Rimossa selezione chat_id!", "[INFO]", "green-text");
+            log(l["removedChatIdSelection"], "[INFO]", "green-text");
           else
-            log("Selezionato "+selectedChatId+"!", "[INFO]", "green-text");
+            log(l["selected"]+selectedChatId+"!", "[INFO]", "green-text");
           updateBotSettings();
         } else {
           if($.isEmptyObject(knownChatIDs))
-            log("Nessun chat_id conosciuto. Impossibile mostrare la GUI. Seleziona un chat_id manualmente con /select &lt;chat_id&gt;", "[ERRORE]", "red-text");
+            log(l["noKnownChats"], l["logError"], "red-text");
           else {
             var opts = "";
             for(var chatId in knownChatIDs) {
@@ -434,7 +597,7 @@ function sendCommand(command) {
         break;
       default:
         if(command.charAt(0) == "/")
-          log("Comando non valido. /help per una lista completa di comandi.", "[ERRORE]", "red-text");
+          log(l["unknownCommand"], l["logError"], "red-text");
         else {
           if (selectedChatId != 0) {
             command = command.replace(/\\n/g, "\n")
@@ -442,14 +605,14 @@ function sendCommand(command) {
               if(command.length <= 4096)
                 sendMessage(selectedChatId, command, true);
               else
-                log("Messaggio troppo lungo. Caratteri massimi consentiti: 4096 caratteri.", "[ERRORE]", "red-text");
+                log(l["messageTooLong"], l["logError"], "red-text");
             else
-              log("Messaggio nullo.", "[ERRORE]", "red-text");
+              log(l["emptyMessage"], l["logError"], "red-text");
           } else
-            log("Per favore, prima di tentare di inviare un messaggio, usa /select", "[ERRORE]", "red-text");
+            log(l["noChatSelected"], l["logError"], "red-text");
         }
         break;
       }
     else
-      log("Prima di scrivere comandi, perfavore, metti il token del bot. Se lo hai già fatto, assicurati di aver avviato il bot cliccando il pulsante \"Avvia\"", "[ERRORE]", "red-text");
+      log(l["consoleBotNotStarted"], l["logError"], "red-text");
   }

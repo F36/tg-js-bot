@@ -59,14 +59,14 @@
               data-position="bottom">help_outline</i>
             <div class="input-field col s12">
               <input id="token" type="text" class="validate" required>
-              <label for="token">Token del bot</label>
+              <label for="token" id="tr-botToken">Token del bot</label>
             </div>
           </div>
           <div class="row">
             <a class="modal-trigger" href="#helpCommands"><i class="material-icons right black-text">help_outline</i></a>
             <div class="input-field col s12">
               <textarea id="commands" class="materialize-textarea"></textarea>
-              <label for="commands">Comandi del bot</label>
+              <label for="commands" id="tr-botcommands">Comandi del bot</label>
             </div>
           </div>
           <div class="row">
@@ -109,14 +109,14 @@
           <div class="row botSettings">
             <div class="col s12">
               <div class="switch">
-                <label for="autoStart">Avvia automaticamente il bot al caricamento della pagina</label>
+                <label for="autoStart" id="tr-autostart">Avvia automaticamente il bot al caricamento della pagina</label>
                 <label>
                   <input type="checkbox" id="autoStart">
                   <span class="lever"></span>
                 </label>
               </div><br />
               <div class="switch">
-                <label for="logAllMsg">Logga i messaggi da qualsiasi chat</label>
+                <label for="logAllMsg" id="tr-logallmsg">Logga i messaggi da qualsiasi chat</label>
                 <label>
                   <input type="checkbox" id="logAllMsg">
                   <span class="lever"></span>
@@ -144,12 +144,12 @@
             </h4>
           </div>
           <div class="row">
-            <span class="left" style="font-size: 20px">Creato da Pato05 <code>:)</code></span>
+            <span class="left" style="font-size: 20px" id="tr-createdby">Creato da Pato05 <code>:)</code></span>
           </div>
         </div>
         <div class="footer-copyright blue darken-3">
           <div class="container">
-            <span>&copy; 2019 Pato05 e <a class="white-text" href="https://github.com/peppelg">Peppelg</a> EasyJSBot</span>
+            <span>&copy; 2019 Pato05 and <a class="white-text" href="https://github.com/peppelg">Peppelg</a> EasyJSBot</span>
             <a href="LICENSE" class="waves-effect waves-light right white-text">LICENSE</a>
             <p class="grey-text darken-1">Remastered version of <a class="grey-text darken-1" href="https://github.com/peppelg"><u>Peppelg</u></a>'s <a class="grey-text darken-1" href="https://peppelg.github.io/Telegram-bot-creator/"><u>bot creator</u></a>.</p>
           </div>
@@ -163,10 +163,10 @@
     </ul>
     <div class="modal modal-fixed-footer" id="helpCommands">
       <div class="modal-content">
-        <h4>Help comandi</h4>
-        <p>
+        <h4 id="tr-cmdHelpTitle">Help comandi</h4>
+        <p id="commandsHelpTr">
           /comando > Risposta<strong>;</strong><br>
-          Nella risposta, puoi usare <strong>photo file_id/url</strong> per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>
+          Nella risposta, puoi usare <strong>photo</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>
           Saranno aggiunti altri tipi di documenti/video presto.<br>
           Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid
           <br><br>
@@ -191,7 +191,7 @@
     </div>
     <div class="modal modal-fixed-footer" id="selectChatIdModal">
       <div class="modal-content">
-        <h4>Seleziona la chat_id</h4>
+        <h4 id="selectChId">Seleziona la chat_id</h4>
         <div class="input-fiels col s12">
           <select id="selectChatId">
           </select>
