@@ -234,6 +234,7 @@ $(document).ready(async function() {
   $("#updateCommands").click(updateCommands);
   if("commands" in cookies) {
     $("#commands").val(cookies["commands"]);
+    if (cookies["commands"].indexOf("///////////") !== -1) $("#commands").val($("#commands").val().split("///////////").join("\n"));
   } else $("#commands").val("/start > Messaggio di avvio!;\n/help > Menù di aiuto!;");
   if("botToken" in cookies) {
     $("#token").val(cookies["botToken"]);
