@@ -153,11 +153,6 @@ var translations = {
 }
 var navLang = navigator.userLanguage || navigator.language;
 var l = logTranslations[navLang] || logTranslations["en"];
-async function matchAll(regex, str, matches = []) {
-  const res = regex.exec(str)
-  res && matches.push(res) && await matchAll(regex, str, matches)
-  return matches
-}
 String.prototype.splitTwo = function(by) {
   var arr = this.split(by);
   var str = this.substr(arr[0].length + by.length);
@@ -338,13 +333,13 @@ async function updateCommands(doLog = true) {
     var keyboard = [];
     if(lastLine.indexOf("[[[") === 0) {
       var m;
-      console.log("building keybard")
-      console.log(lastLine)
-      m = await matchAll(/\[?(,? ?\[(\[(.+?)-(.+?)\])\])\]s?/g, lastLine);
-      console.log(m)
-      for (var i of m) for(var k of m) {
-        keyboard.push([{text:i[3],callback_data:i[4]}]);
+      console.log("building keybard");
+      console.log(lastLine);
+      var search = /\[?(,? ?\[(\[(.+?)-(.+?)\])\])\]?/g;
+      while (m = search.exec(lastLine)) {
+        keyboard.push([{text:m[3],callback_data:m[4]}]);
       }
+      console.log(m);
       console.log(keyboard)
       commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
     }
@@ -510,11 +505,11 @@ async function analyzeUpdate(update) {
   } else chat_name = name;
     text = data;
     answerCallbackQuery(callback_query_id);
-    log("Callback Data: "+data, "["+htmlEncode(name)+"]", ((selectedChatId == user_id) ? "yellow-text" : "white-text"));
+    if(debug) log("Callback Data: "+data, "["+htmlEncode(name)+"]", ((selectedChatId == user_id) ? "yellow-text" : "white-text"));
   } else {
     text = l["messageNotSupported"];
   }
-  if(selectedChatId == chat_id || $("#logAllMsg").prop("checked")) {
+  if((selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && typeof data === "undefined") {
     if(text)
       log(htmlEncode(text), "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
   }
