@@ -98,7 +98,12 @@ var translations = {
     <code>{MSGTEXT}</code>: Testo messaggio inviato.<br>\
     <code>{HTMLESCAPEDMSGTEXT}</code>: Testo messaggio inviato escapato da HTML.\
     <br><br>\
-    Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.',
+    Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.\
+    <br><br>\
+    Puoi usare le tastiere inline mettendo sull\'ultima linea della risposta al tuo comando <strong>[[[BOTTONE-COMANDO]]]</strong> e, una virgola prima dell\'ultima parentesi quadra per mettere un altro bottone sulla tastiera inline.\
+    <br>Esempio: <strong>[[[Bottone1-comando1]],[[Bottone2-comando2]]]</strong>\
+    Per rispondere ad un bottone cliccato, metti il callback data messo nel bottone come un normale comando\
+    <code>comando1 > risposta1;</code> Il messaggio sarà modificato con risposta1',
     "tr-botToken": "Token del bot",
     "tr-botcommands": "Comandi del bot",
     "startBot": "Avvia!",
@@ -138,11 +143,21 @@ var translations = {
     <code>{MSGTEXT}</code>: Text of the message sent by the user<br>\
     <code>{HTMLESCAPEDMSGTEXT}</code>: Text of the message sent by the user HTML escaped.\
     <br><br>\
-    Putting <code>any</code> as command, it will answer to each message.'
+    Putting <code>any</code> as command, it will answer to each message.\
+    <br><br>\
+    You can use inline keyboards by putting at the last line <strong>[[[BUTTON-COMMAND]]]</strong> and, a comma before the last closing square bracket to put another keyboard button\
+    <br>Example: <strong>[[[Button1-commmand1]],[[Button2-command2]]]</strong>\
+    To answer a clicked button, just put the name of your callback data as a normal command\
+    <code>command1 > answer1;</code> The message will be edited with answer1'
   }
 }
 var navLang = navigator.userLanguage || navigator.language;
 var l = logTranslations[navLang] || logTranslations["en"];
+function matchAll(regex, str, matches = []) {
+  const res = regex.exec(str)
+  res && matches.push(res) && matchAll(regex, str, matches)
+  return matches
+}
 String.prototype.splitTwo = function(by) {
   var arr = this.split(by);
   var str = this.substr(arr[0].length + by.length);
@@ -306,9 +321,9 @@ async function updateCommands(doLog = true) {
   commands = {};
   var commandsString = $("#commands").val();
   var c = commandsString.split(/;$/gm);
-  for(var command in c) {
-    if(c[command].charAt(0) === "\n") c[command] = c[command].substr(1);
-    var commandArr = c[command].splitTwo(" > ");
+  for(var command of c) {
+    if(command.charAt(0) === "\n") command = command.substr(1);
+    var commandArr = command.splitTwo(" > ");
     var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
     if(photo) {
       commandArr[1] = commandArr[1].splitTwo("photo ")[1];
@@ -318,10 +333,21 @@ async function updateCommands(doLog = true) {
         commandArr[1] = commandArr[1].splitTwo(caption)[0];
       }
     }
+    var lineSplit = commandArr[1].split(/\n/);
+    var lastLine = lineSplit[lineSplit.length - 1];
+    var keyboard = [];
+    if(lastLine.indexOf("[[[") === 0) {
+      var m;
+      m = matchAll(/\[?(,? ?\[(\[([A-z]*)-([A-z]*)\])\])\]s?/g, lastLine)
+      for (var i of m) for(var k of m) {
+        keyboard.push([{text:i[3],callback_data:i[4]}]);
+      }
+      commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
+    }
     if(commandArr[0] in commands)
-      commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption] : [commandArr[1], "text"]));
+      commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption] : [commandArr[1], "text", keyboard]));
     else 
-      commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption]] : [[commandArr[1], "text"]];
+      commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption]] : [[commandArr[1], "text", keyboard]];
   }
   localStorage.setItem("commands", $("#commands").val());
   if(doLog) log(l["updatedCommands"], "[INFO]", "green-text");
@@ -417,10 +443,8 @@ async function analyzeUpdate(update) {
     log("Analysing update: "+htmlEncode(JSON.stringify(update)), "[DEBUG]");
     
   }
-  if ("message" in update)
+  if ("message" in update){
     message = update["message"];
-  else
-    message = {};
   if ("chat" in message) {
     chat_id = message["chat"]["id"];
     if("title" in message["chat"]) {
@@ -461,6 +485,28 @@ async function analyzeUpdate(update) {
       if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
     });
     text = "";
+  }
+  } else if ("callback_query" in update) {
+    var callback_query = update["callback_query"];
+    var data = callback_query["data"];
+    var message = callback_query["message"];
+    var callback_query_id = callback_query["id"];
+    var from = callback_query["from"];
+    var user_id = from["id"];
+    if("first_name" in from)
+      first_name = from["first_name"];
+    name = first_name;
+    if("last_name" in from) {
+      last_name = from["last_name"];
+      name += " "+last_name;
+    }
+    chat_id = callback_query["message"]["chat"]["id"];
+  if(typeof chat_title !== "undefined") {
+    chat_name = chat_title;
+  } else chat_name = name;
+    text = data;
+    answerCallbackQuery(callback_query_id);
+    log("Callback Data: "+data, "["+htmlEncode(name)+"]", ((selectedChatId == user_id) ? "yellow-text" : "white-text"));
   } else {
     text = l["messageNotSupported"];
   }
@@ -490,10 +536,32 @@ async function analyzeUpdate(update) {
     htmlEncode(text)
   ];
   if(caption == "/fileid") {
-    sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", false, "HTML");
+    sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", {}, false, "HTML");
   }
   if(text in commands && text != "") {
     for(var ind of commands[text]) {
+      if(ind[1] == "text") {
+        var send_text = ind[0].replaceArray(find, replace);
+        if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
+        var reply_markup = {};
+        if(2 in ind) {
+          if(debug) log("Building reply_markup inline keyboard...", "[DEBUG]");
+          reply_markup = {"inline_keyboard": ind[2]};
+        }
+        if(typeof data !== "undefined") editMessageText(chat_id, send_text, callback_query["message"]["message_id"], reply_markup);
+        else sendMessage(chat_id, send_text, reply_markup);
+      } else if(ind[1] == "photo") {
+        var caption = "";
+        if(2 in ind) {
+          caption = ind[2].replaceArray(find, replace);
+          if(debug) log("Caption to send: "+htmlEncode(caption), "[DEBUG]");
+        }
+        sendPhoto(chat_id, ind[0], caption);
+      }
+    }
+  }
+  if("any" in commands) {
+    for(var ind of commands["any"]) {
       if(ind[1] == "text") {
         var send_text = ind[0].replaceArray(find, replace);
         if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
@@ -508,16 +576,18 @@ async function analyzeUpdate(update) {
       }
     }
   }
-  if ("any" in commands) {
-    for(var ind in commands["any"]) {
-      var send_text = commands["any"][ind].replaceArray(find, replace);
-      if(debug) log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
-      sendMessage(chat_id, send_text);
-    }
-  }
   if (debug) log("Response Time: "+((new Date).getTime() - startTime)+"ms", "[DEBUG]");
 }
-async function sendMessage(chat_id, messageText, doLog = false, parse_mode = false, disable_web_page_preview = false) {
+async function answerCallbackQuery(callback_query_id, text, show_alert) {
+  var args = {
+    callback_query_id: callback_query_id,
+    text: text,
+    show_alert: show_alert
+  };
+  request("answerCallbackQuery", args);
+
+}
+async function sendMessage(chat_id, messageText, reply_markup = {}, doLog = false, parse_mode = false, disable_web_page_preview = false) {
   if(!parse_mode) parse_mode = $("#parseMode").val();
   if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
   if((chat_id == undefined || chat_id == "") && !chat_id) {
@@ -527,7 +597,8 @@ async function sendMessage(chat_id, messageText, doLog = false, parse_mode = fal
       chat_id: chat_id,
       text: messageText,
       parse_mode: parse_mode,
-      disable_web_page_preview: disable_web_page_preview
+      disable_web_page_preview: disable_web_page_preview,
+      reply_markup: JSON.stringify(reply_markup)
     };
     request("sendMessage", args, async function(response) {
       if(doLog) log(response["result"]["text"], "["+l["messageSent"]+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
@@ -536,6 +607,26 @@ async function sendMessage(chat_id, messageText, doLog = false, parse_mode = fal
       log(l["sendMessageError"]+response, l["logError"], "red-text");
     }, true);
     return true;
+  }
+}
+async function editMessageText(chat_id, messageText, message_id, reply_markup = {}, doLog = false, parse_mode = false, disable_web_page_preview = false) {
+  if(!parse_mode) parse_mode = $("#parseMode").val();
+  if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
+  if((chat_id == undefined || chat_id == "") && !chat_id) {
+    return false;
+  } else {
+    var args = {
+      chat_id: chat_id,
+      text: messageText,
+      parse_mode: parse_mode,
+      message_id: message_id,
+      disable_web_page_preview: disable_web_page_preview,
+      reply_markup: JSON.stringify(reply_markup)
+    };
+    request("editMessageText", args, async function() {}, async function(xhr) {
+      var response = xhr.responseText;
+      log(l["sendMessageError"]+response, l["logError"], "red-text");
+    }, true);
   }
 }
 async function sendPhoto(chat_id, photo, caption = "", doLog = false, parse_mode = false, disable_web_page_preview = false) {
@@ -607,7 +698,7 @@ async function sendCommand(command) {
             command = command.replace(/\\n/g, "\n")
             if(command.replace(new RegExp(" ", "g"), "").length > 0)
               if(command.length <= 4096)
-                sendMessage(selectedChatId, command, true);
+                sendMessage(selectedChatId, command, {}, true);
               else
                 log(l["messageTooLong"], l["logError"], "red-text");
             else
