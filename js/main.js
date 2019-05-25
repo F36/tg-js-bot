@@ -153,9 +153,9 @@ var translations = {
 }
 var navLang = navigator.userLanguage || navigator.language;
 var l = logTranslations[navLang] || logTranslations["en"];
-function matchAll(regex, str, matches = []) {
+async function matchAll(regex, str, matches = []) {
   const res = regex.exec(str)
-  res && matches.push(res) && matchAll(regex, str, matches)
+  res && matches.push(res) && await matchAll(regex, str, matches)
   return matches
 }
 String.prototype.splitTwo = function(by) {
@@ -338,10 +338,14 @@ async function updateCommands(doLog = true) {
     var keyboard = [];
     if(lastLine.indexOf("[[[") === 0) {
       var m;
-      m = matchAll(/\[?(,? ?\[(\[([A-z]*)-([A-z]*)\])\])\]s?/g, lastLine)
+      console.log("building keybard")
+      console.log(lastLine)
+      m = await matchAll(/\[?(,? ?\[(\[(.+?)-(.+?)\])\])\]s?/g, lastLine);
+      console.log(m)
       for (var i of m) for(var k of m) {
         keyboard.push([{text:i[3],callback_data:i[4]}]);
       }
+      console.log(keyboard)
       commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
     }
     if(commandArr[0] in commands)
