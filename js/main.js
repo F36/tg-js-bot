@@ -14,7 +14,7 @@ var botInfo;
 var debug = false;
 var startTime = 0;
 var logTranslations = {
-  "itIT": {
+  "it-IT": {
     "startingBot": "Avviando il bot... Connessione in corso ai server telegram...",
     "emptyToken": "Bot non avviato! Bot token vuoto!",
     "stopSent": "Richiesta di arresto inviata!",
@@ -80,7 +80,7 @@ var logTranslations = {
   }
 }
 var translations = {
-  "itIT": {
+  "it-IT": {
     "commandsHelpTr": '/comando > Risposta<strong>;</strong><br>\
     Nella risposta, puoi usare <strong>photo</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
     Saranno aggiunti altri tipi di documenti/video presto.<br>\
@@ -234,7 +234,10 @@ $(document).ready(async function() {
   $("#updateCommands").click(updateCommands);
   if("commands" in cookies) {
     $("#commands").val(cookies["commands"]);
-    if (cookies["commands"].indexOf("///////////") !== -1) $("#commands").val($("#commands").val().split("///////////").join("\n"));
+    if (cookies["commands"].indexOf("///////////") !== -1) {
+      $("#commands").val($("#commands").val().split("///////////").join("\n"));
+      updateCommands();
+    }
   } else $("#commands").val("/start > Messaggio di avvio!;\n/help > Menù di aiuto!;");
   if("botToken" in cookies) {
     $("#token").val(cookies["botToken"]);
