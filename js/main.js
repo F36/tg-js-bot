@@ -333,14 +333,13 @@ async function updateCommands(doLog = true) {
     var keyboard = [];
     if(lastLine.indexOf("[[[") === 0) {
       var m;
-      console.log("building keybard");
-      console.log(lastLine);
+      if(debug) log("Building inline keyboard", "[DEBUG]");
       var search = /\[?(,? ?\[(\[(.+?)-(.+?)\])\])\]?/g;
       while (m = search.exec(lastLine)) {
+        if(debug) log("Pushing <code>"+JSON.stringify(m)+"</code> into the keyboard array.", "[DEBUG]");
         keyboard.push([{text:m[3],callback_data:m[4]}]);
       }
-      console.log(m);
-      console.log(keyboard)
+      if(debug) log("Inline keyboard built.", "[DEBUG]");
       commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
     }
     if(commandArr[0] in commands)
@@ -559,7 +558,7 @@ async function analyzeUpdate(update) {
       }
     }
   }
-  if("any" in commands) {
+  if("any" in commands && typeof data === "undefined") {
     for(var ind of commands["any"]) {
       if(ind[1] == "text") {
         var send_text = ind[0].replaceArray(find, replace);
