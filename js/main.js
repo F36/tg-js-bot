@@ -232,7 +232,7 @@
     consoleElem.append("<br>");
     consoleElem.scrollTop(consoleElem[0].scrollHeight - consoleElem.height());
   }
-  $(document).ready(async function() {
+  $(window).on("load", async function() {
     if (location.href.indexOf("#") != -1) {
       var hash = location.href.substr(location.href.indexOf("#")+1);
       if(hash == "debug=1") {
@@ -364,13 +364,12 @@
         }, 0);
       }
     }
-    setTimeout(function() {
-      M.updateTextFields();
-      M.textareaAutoResize($('#commands'));
-      $(".tooltipped").tooltip();
-      $('select').formSelect();
-      $(".modal").modal();
-    }, 0);
+    M.updateTextFields();
+    $('#commands').css("height", "auto");
+    setTimeout(function(){M.textareaAutoResize($('#commands'));}, 200);
+    $(".tooltipped").tooltip();
+    $('select').formSelect();
+    $(".modal").modal();
     updateCommands(false);
   });
   async function updateCommands(doLog = true) {
