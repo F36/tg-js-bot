@@ -44,7 +44,10 @@
       "noChatSelected": "Per favore, prima di tentare di inviare un messaggio, usa /select",
       "consoleBotNotStarted": "Prima di scrivere comandi, perfavore, metti il token del bot. Se lo hai già fatto, assicurati di aver avviato il bot cliccando il pulsante \"Avvia\"",
       "messageSent": "Messaggio inviato: ",
-      "logError": "[ERRORE]"
+      "logError": "[ERRORE]",
+      "deleteMessageError": "Impossibile eliminare il messaggio ",
+      "regexpError": "Impossibile costruire la tastiera: l'espressione regolare non va avanti. Per favore, prova ad aggiornare il tuo browser, oppure avvia un'issue su Github",
+      "critError": "[ERRORE CRITICO]"
     },
     "en": {
       "startingBot": "Starting the bot... Connecting to telegram servers...",
@@ -76,7 +79,10 @@
       "noChatSelected": "Please, before trying to send a message, use /select",
       "consoleBotNotStarted": "Before typing commands, enter the bot token. If you have already done it, make sure you've clicked the \"Start\" button",
       "messageSent": "Message sent",
-      "logError": "[ERROR]"
+      "logError": "[ERROR]",
+      "deleteMessageError": "Can't delete message ",
+      "regexpError": "Can't build keyboard: Regexp not going forward. Please update your browser or put an issue on Github.",
+      "critError": "[CRITICAL ERROR]"
     }
   }
   var translations = {
@@ -117,7 +123,13 @@
       <br><code>(((Ciao)),((Come va?)))</code>: Ciao e Come va? Saranno questa volta su linee diverse\
       <br>Facendo così, creerai una tastiera permanente, che si può rimuovere mettendo sulla risposta () che rimuoverà la tastiera\
       <br>Oppure, per rimuoverla senza farla rimuovere nella risposta, potrai mettere ", true" alla fine delle parentesi <code>(((Ciao))), true</code> che creerà una\
-      "one time keyboard" cioè, una tastiera che verrà rimossa automaticamente al click del bottone.',
+      "one time keyboard" cioè, una tastiera che verrà rimossa automaticamente al click del bottone.\
+      <br><br>Esempio pratico:<br>\
+      <code>/start > Ciao, benvenuto sul bot. Clicca uno dei pulsanti:<br>\
+      (((Come sei stato creato?),(Cosa puoi fare?)),((Ciao!)));<br>\
+      Come sei stato creato? > Sono stato creato con EasyJSBot;<br>\
+      Cosa puoi fare? > Niente, sono solo di test;<br>\
+      Ciao! > Ciao!!;</code>',
       "tr-botToken": "Token del bot",
       "tr-botcommands": "Comandi del bot",
       "startBot": "Avvia!",
@@ -176,7 +188,13 @@
       <br><code>(((Ciao)),((Come va?)))</code>: Hello and How are you? will now be on different lines\
       <br>Doing that you\'ll create a permanent keyboard, that can be removed with () in the last line of the answer\
       <br>Or, to remove it without doing it in the answer, if you put ", true" at the end of the brackets <code>(((Ciao))), true</code> it will create a\
-      "one time keyboard", a keyboard that will be removed when a button is clicked.'
+      "one time keyboard", a keyboard that will be removed when a button is clicked.\
+      <br><br>Pratical example:<br>\
+      <code>/start > Hello, welcome to the bot. Click one of the buttons:<br>\
+      (((How have you been created?),(What can you do?)),((Hello!)));<br>\
+      How have you been created? > I\'ve been created with EasyJSBot;<br>\
+      What can you do? > Nothing, I am only for testing;<br>\
+      Hello! > Hello there!!;</code>'
     }
   }
   var navLang = navigator.userLanguage || navigator.language;
@@ -364,9 +382,16 @@
         debug&&log("Building inline keyboard", "[DEBUG]");
         var search = /\[?(,? ?\[?(,? ?\[(.*?)-(.*?)\]?)\])\]?/g;
         var i = 0;
+        var e = 0;
         while (m = search.exec(lastLine)) {
           var pushArr = {text:m[3],callback_data:m[4]};
           debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
+          e++
+          if(e > 1 && search.lastIndex < e) {
+            log(l["regexpError"], l["critError"], "red-text");
+            alert(l["critError"]+" "+l["regexpError"]);
+            return;
+          }
           if(m[1].indexOf(", [[") === 0 || m[1].indexOf(",[[") === 0 || m[1].indexOf("[[") === 0) {
             keyboard["inline_keyboard"].push([pushArr]);
             i++;
@@ -604,8 +629,14 @@
           if(2 in ind) {
             reply_markup = ind[2];
           }
-          if(typeof data !== "undefined") editMessageText(chat_id, send_text, callback_query["message"]["message_id"], reply_markup);
-          else sendMessage(chat_id, send_text, reply_markup);
+          if(typeof data !== "undefined") {
+            if(!$.isEmptyObject(reply_markup)) {
+              debug&&log("reply_markup is not an inline keyboard and request has been sent by a button, sending a new message and deleting the existing one.", "[DEBUG]");
+              deleteMessage(chat_id, callback_query["message"]["message_id"]);
+              sendMessage(chat_id, send_text, reply_markup);
+            } else
+              editMessageText(chat_id, send_text, callback_query["message"]["message_id"], reply_markup);
+          } else sendMessage(chat_id, send_text, reply_markup);
         } else if(ind[1] == "photo") {
           var caption = "";
           if(2 in ind) {
@@ -621,7 +652,11 @@
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
-          sendMessage(chat_id, send_text);
+          var reply_markup = {};
+          if(2 in ind) {
+            reply_markup = ind[2];
+          }
+          sendMessage(chat_id, send_text, reply_markup);
         } else if(ind[1] == "photo") {
           var caption = "";
           if(2 in ind) {
@@ -642,6 +677,16 @@
     };
     request("answerCallbackQuery", args);
 
+  }
+  async function deleteMessage(chat_id, message_id) {
+    var args = {
+      chat_id: chat_id,
+      message_id: message_id
+    };
+    request("deleteMessage", args, async function() {}, async function(xhr) {
+      var response = xhr.responseText;
+      log(l["deleteMessageError"]+message_id+": "+response, l["logError"], "red-text");
+    }, true);
   }
   async function sendMessage(chat_id, messageText, reply_markup = {}, doLog = false, parse_mode = false, disable_web_page_preview = false) {
     if(!parse_mode) parse_mode = $("#parseMode").val();
