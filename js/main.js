@@ -1,5 +1,4 @@
 "use strict";
-(function() {
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -87,7 +86,7 @@
   }
   var translations = {
     "it-IT": {
-      "commandsHelpTr": '/comando > Risposta<strong>;</strong><br>\
+      "commandsHelpTr": '/comando > Risposta<strong>;</strong>(se devi usare il punto e virgola, poi ritornare a capo, metti un \\ prima del ;. Esempio: <code>/start > Ciao\\;;</code>, invierà Ciao;)<br>\
       Nella risposta, puoi usare <strong>photo</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
       Saranno aggiunti altri tipi di documenti/video presto.<br>\
       Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid\
@@ -152,7 +151,7 @@
       "tr-cmdHelpTitle": "Commands Help",
       "selectChId": "Select the chat_id",
       "removeChatId": "Remove selection",
-      "commandsHelpTr": '/command > Answer<strong>;</strong><br>\
+      "commandsHelpTr": '/command > Answer<strong>;</strong> (if you have to use the semicolon, then return, put a \\ before ;. Example: <code>/start > Hello\\;;</code>, it will send Hello;)<br>\
       In the answer, you can use <strong>photo</strong> followed by <strong>file_id/url</strong> (to put the caption to a photo, start a new line) to send a photo, or a simple text to send a textual answer.<br>\
       Will be added new types of documents/videos soon<br>\
       To get a photo file_id, send a photo to your active bot with caption /fileid\
@@ -360,12 +359,12 @@
     if(doLog) log(l["updatingCommands"], "[INFO]", "yellow-text");
     commands = {};
     var commandsString = $("#commands").val();
-    var c = commandsString.split(/;$/gm);
+    var c = commandsString.split(/[^\\]; +?$/gm);
     for(var command of c) {
       if(command.charAt(0) === "\n") command = command.substr(1);
       var commandArr = splitTwo(command, " > ");
       var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
-      var lineSplit = commandArr[1].split(/\n/);
+      var lineSplit = commandArr[1].split(/\n/g);
       var lastLine = lineSplit[lineSplit.length - 1];
       if(photo) {
         commandArr[1] = splitTwo(commandArr[1], "photo ")[1];
@@ -375,7 +374,7 @@
           commandArr[1] = splitTwo(commandArr[1], caption)[0];
         }
       }
-      var keyboard = [];
+      var keyboard = null;
       if(lastLine.indexOf("[[[") === 0) {
         var m;
         keyboard = {"inline_keyboard": []};
@@ -625,7 +624,7 @@
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
-          var reply_markup = {};
+          var reply_markup = null;
           if(2 in ind) {
             reply_markup = ind[2];
           }
@@ -688,7 +687,7 @@
       log(l["deleteMessageError"]+message_id+": "+response, l["logError"], "red-text");
     }, true);
   }
-  async function sendMessage(chat_id, messageText, reply_markup = {}, doLog = false, parse_mode = false, disable_web_page_preview = false) {
+  async function sendMessage(chat_id, messageText, reply_markup = null, doLog = false, parse_mode = false, disable_web_page_preview = false) {
     if(!parse_mode) parse_mode = $("#parseMode").val();
     if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
     if((chat_id == undefined || chat_id == "") && !chat_id) {
@@ -698,9 +697,9 @@
         chat_id: chat_id,
         text: messageText,
         parse_mode: parse_mode,
-        disable_web_page_preview: disable_web_page_preview,
-        reply_markup: JSON.stringify(reply_markup)
+        disable_web_page_preview: disable_web_page_preview
       };
+      if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
       request("sendMessage", args, async function(response) {
         if(doLog) log(response["result"]["text"], "["+l["messageSent"]+((chat_id in knownChatIDs) ? knownChatIDs[chat_id] : chat_id)+"]", "green-text");
       }, async function(xhr) {
@@ -710,7 +709,7 @@
       return true;
     }
   }
-  async function editMessageText(chat_id, messageText, message_id, reply_markup = {}, doLog = false, parse_mode = false, disable_web_page_preview = false) {
+  async function editMessageText(chat_id, messageText, message_id, reply_markup = null, doLog = false, parse_mode = false, disable_web_page_preview = false) {
     if(!parse_mode) parse_mode = $("#parseMode").val();
     if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
     if((chat_id == undefined || chat_id == "") && !chat_id) {
@@ -722,8 +721,8 @@
         parse_mode: parse_mode,
         message_id: message_id,
         disable_web_page_preview: disable_web_page_preview,
-        reply_markup: JSON.stringify(reply_markup)
       };
+      if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
       request("editMessageText", args, async function() {}, async function(xhr) {
         var response = xhr.responseText;
         log(l["sendMessageError"]+response, l["logError"], "red-text");
@@ -812,4 +811,3 @@
       else
         log(l["consoleBotNotStarted"], l["logError"], "red-text");
   }
-})();
