@@ -1,4 +1,5 @@
 "use strict";
+(function() {
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -359,7 +360,7 @@
     if(doLog) log(l["updatingCommands"], "[INFO]", "yellow-text");
     commands = {};
     var commandsString = $("#commands").val();
-    var c = commandsString.split(/[^\\]; +?$/gm);
+    var c = commandsString.split(/(?<!\\); *$/gm);
     for(var command of c) {
       if(command.charAt(0) === "\n") command = command.substr(1);
       var commandArr = splitTwo(command, " > ");
@@ -811,3 +812,4 @@
       else
         log(l["consoleBotNotStarted"], l["logError"], "red-text");
   }
+})();
