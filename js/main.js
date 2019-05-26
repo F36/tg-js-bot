@@ -649,7 +649,7 @@
             reply_markup = JSON.parse(reply_markup);
           }
           if(typeof data !== "undefined") {
-            if(!$.isEmptyObject(reply_markup)) {
+            if(!$.isEmptyObject(reply_markup) && !("inline_keyboard" in reply_markup)) {
               debug&&log("reply_markup is not an inline keyboard and request has been sent by a button, sending a new message and deleting the existing one.", "[DEBUG]");
               deleteMessage(chat_id, callback_query["message"]["message_id"]);
               sendMessage(chat_id, send_text, reply_markup);
