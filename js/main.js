@@ -13,6 +13,8 @@
   var botInfo;
   var debug = false;
   var startTime = 0;
+  var cActionTime = 0;
+  var startTime = (new Date).getTime();
   var logTranslations = {
     "it-IT": {
       "startingBot": "Avviando il bot... Connessione in corso ai server telegram...",
@@ -47,7 +49,10 @@
       "logError": "[ERRORE]",
       "deleteMessageError": "Impossibile eliminare il messaggio ",
       "regexpError": "Impossibile costruire la tastiera: l'espressione regolare non va avanti. Per favore, prova ad aggiornare il tuo browser, oppure avvia un'issue su Github",
-      "critError": "[ERRORE CRITICO]"
+      "critError": "[ERRORE CRITICO]",
+      "hours": " ore ",
+      "minutes": " minuti ",
+      "seconds": " secondi "
     },
     "en": {
       "startingBot": "Starting the bot... Connecting to telegram servers...",
@@ -82,7 +87,10 @@
       "logError": "[ERROR]",
       "deleteMessageError": "Can't delete message ",
       "regexpError": "Can't build keyboard: Regexp not going forward. Please update your browser or put an issue on Github.",
-      "critError": "[CRITICAL ERROR]"
+      "critError": "[CRITICAL ERROR]",
+      "hours": " hours ",
+      "minutes": " minutes ",
+      "seconds": " seconds "
     }
   }
   var translations = {
@@ -93,7 +101,7 @@
       Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid\
       <br><br>\
       Nella risposta testuale puoi usare i seguenti codici:<br>\
-      <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>\
+      <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>, <code>{STARTTIME}</code>\
       <br>\
       <code>{CHATID}</code>: ID della chat<br>\
       <code>{USERID}</code>: ID utente<br>\
@@ -103,6 +111,7 @@
       <code>{LASTNAME}</code>: Cognome dell\'utente<br>\
       <code>{MSGTEXT}</code>: Testo messaggio inviato.<br>\
       <code>{HTMLESCAPEDMSGTEXT}</code>: Testo messaggio inviato escapato da HTML.\
+      <code>{STARTTIME}</code>: Ore, minuti e secondi formattati basandosi sulla tua lingua.\
       <br><br>\
       Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.\
       <br><br>\
@@ -158,7 +167,7 @@
       To get a photo file_id, send a photo to your active bot with caption /fileid\
       <br><br>\
       In the textual answer or caption you can use these codes:<br>\
-      <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>\
+      <code>{CHATID}</code>, <code>{USERID}</code>, <code>{CHATTITLE}</code>, <code>{NAME}</code>, <code>{FIRSTNAME}</code>, <code>{LASTNAME}</code>, <code>{MSGTEXT}</code>, <code>{HTMLESCAPEDMSGTEXT}</code>, <code>{STARTTIME}</code>\
       <br>\
       <code>{CHATID}</code>: Chat ID<br>\
       <code>{USERID}</code>: User ID<br>\
@@ -168,6 +177,7 @@
       <code>{LASTNAME}</code>: User\'s last name<br>\
       <code>{MSGTEXT}</code>: Text of the message sent by the user<br>\
       <code>{HTMLESCAPEDMSGTEXT}</code>: Text of the message sent by the user HTML escaped.\
+      <code>{STARTTIME}</code>: Ore, minuti e secondi formattati basandosi sulla tua lingua.\
       <br><br>\
       Putting <code>any</code> as command, it will answer to each message.\
       <br><br>\
@@ -258,12 +268,20 @@
     $("#consoleCommands").focus(async function() {
       $("#consoleCommandsContainer").css("background", "rgb(15, 15, 15)");
     });
+    $("#consoleCommands").keyup(async function() {
+    });
     $("#consoleCommands").blur(async function() {
       $("#consoleCommandsContainer").css("background", "#000");
     });
     $("#consoleCommands").keyup(async function(e) {
+      var nowTime = Math.round((new Date).getTime()/1000);
+      if(nowTime - cActionTime > 5) {
+        sendChatAction(selectedChatId, "typing");
+        cActionTime = nowTime;
+      }
       if(e.keyCode == 13) {
         $("#consoleCommandsGo").click();
+        cActionTime = 0;
       } else if(e.keyCode == 38) {
         $(this).val(lastCommand);
       }
@@ -613,6 +631,7 @@
         log(htmlEncode(text), "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
     }
     knownChatIDs[chat_id] = chat_name;
+    var diffTime = new Date((new Date).getTime() - startTime);
     var find = [
       "{CHATID}",
       "{USERID}",
@@ -621,7 +640,8 @@
       "{FIRSTNAME}",
       "{LASTNAME}",
       "{MSGTEXT}",
-      "{HTMLESCAPEDMSGTEXT}"
+      "{HTMLESCAPEDMSGTEXT}",
+      "{STARTTIME}"
     ];
     var replace = [
       chat_id,
@@ -631,7 +651,8 @@
       ($("#parseMode").val() == "HTML") ? htmlEncode(first_name) : first_name,
       ($("#parseMode").val() == "HTML") ? htmlEncode(last_name) : last_name,
       text,
-      htmlEncode(text)
+      htmlEncode(text),
+      (diffTime.getHours()-1 + l["hours"] + diffTime.getMinutes() + l["minutes"] + diffTime.getSeconds() + l["seconds"])
     ];
     if(caption == "/fileid") {
       sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", {}, false, "HTML");
@@ -706,6 +727,13 @@
       var response = xhr.responseText;
       log(l["deleteMessageError"]+message_id+": "+response, l["logError"], "red-text");
     }, true);
+  }
+  async function sendChatAction(chat_id, action) {
+    var args = {
+      chat_id: chat_id,
+      action: action
+    };
+    request("sendChatAction", args);
   }
   async function sendMessage(chat_id, messageText, reply_markup = null, doLog = false, parse_mode = false, disable_web_page_preview = false) {
     if(!parse_mode) parse_mode = $("#parseMode").val();
