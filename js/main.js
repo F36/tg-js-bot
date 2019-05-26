@@ -384,7 +384,12 @@
         var i = 0;
         var e = 0;
         while (m = search.exec(lastLine)) {
-          var pushArr = {text:m[3],callback_data:m[4]};
+          var pushArr;
+          if(m[4].indexOf("https://") === 0 || m[4].indexOf("http://") === 0 || m[4].indexOf("tg://") === 0) {
+            pushArr = {text:m[3],url:m[4]};
+          } else {
+            pushArr = {text:m[3],callback_data:m[4]};
+          }
           debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
           e++
           if(e > 1 && search.lastIndex < e) {
@@ -518,6 +523,7 @@
     var message;
     var chat_id = 0;
     var name = "";
+    var ptext;
     var chat_name;
     var chat_title;
     var is_group = false;
@@ -549,14 +555,16 @@
       if("id" in message["from"]) user_id = message["from"]["id"];
       else user_id = 0;
     }
+
     if(typeof chat_title !== "undefined") {
       chat_name = chat_title;
     } else chat_name = name;
     if ("text" in message) {
-      if(message["text"].charAt(0) == "/")
-        text = message["text"].replace("@"+botUsername, "");
+      text = message["text"]
+      if(text.charAt(0) == "/")
+        ptext = text.replace("@"+botUsername, "");
       else
-        text = message["text"];
+        ptext = text;
     } else if ("photo" in message) {
       var maxPhotoSize = message["photo"][(message["photo"].length - 1)]["file_id"];
       var caption = message["caption"];
@@ -583,12 +591,20 @@
         name += " "+last_name;
       }
       chat_id = callback_query["message"]["chat"]["id"];
-    if(typeof chat_title !== "undefined") {
-      chat_name = chat_title;
-    } else chat_name = name;
-      text = data;
-      answerCallbackQuery(callback_query_id);
-      debug&&log("Callback Data: "+data, "["+htmlEncode(name)+"]", ((selectedChatId == user_id) ? "yellow-text" : "white-text"));
+      if ("chat" in message) {
+        chat_id = message["chat"]["id"];
+        if("title" in message["chat"]) {
+          chat_title = message["chat"]["title"];
+          is_group = true;
+        }
+      }
+      if(typeof chat_title !== "undefined") {
+        chat_name = chat_title;
+      } else chat_name = name;
+        ptext = data;
+        text = data;
+        answerCallbackQuery(callback_query_id);
+        debug&&log("Callback Data: "+data, "["+htmlEncode(name)+"]", ((selectedChatId == user_id) ? "yellow-text" : "white-text"));
     } else {
       text = l["messageNotSupported"];
     }
@@ -620,14 +636,17 @@
     if(caption == "/fileid") {
       sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", {}, false, "HTML");
     }
-    if(text in commands && text != "") {
-      for(var ind of commands[text]) {
+    if(ptext in commands && ptext != "") {
+      for(var ind of commands[ptext]) {
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
           var reply_markup = null;
           if(2 in ind) {
             reply_markup = ind[2];
+            reply_markup = JSON.stringify(reply_markup);
+            reply_markup = replaceArray(find, replace, reply_markup);
+            reply_markup = JSON.parse(reply_markup);
           }
           if(typeof data !== "undefined") {
             if(!$.isEmptyObject(reply_markup)) {
