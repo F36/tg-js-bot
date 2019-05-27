@@ -52,7 +52,10 @@
       "critError": "[ERRORE CRITICO]",
       "hours": " ore ",
       "minutes": " minuti ",
-      "seconds": " secondi "
+      "seconds": " secondi ",
+      "settingWebhook": "Sto impostando il webhook...",
+      "botStoppedWebhookSet": "Bot arrestato e webhook settato!",
+      "errorWebhook": "Errore durante l'imposto del webhook: "
     },
     "en": {
       "startingBot": "Starting the bot... Connecting to telegram servers...",
@@ -90,7 +93,10 @@
       "critError": "[CRITICAL ERROR]",
       "hours": " hours ",
       "minutes": " minutes ",
-      "seconds": " seconds "
+      "seconds": " seconds ",
+      "settingWebhook": "Setting the webhook...",
+      "botStoppedWebhookSet": "Bot stopped and webhook set!",
+      "errorWebhook": "Error while setting the webhook: "
     }
   }
   var translations = {
@@ -282,6 +288,9 @@
     $("#consoleCommands").blur(async function() {
       $("#consoleCommandsContainer").css("background", "#000");
     });
+    $(window).on("beforeunload", async function() {
+      if(started !== 0) return "Il bot è in esecuzione. Per favore, clicca Arresta prima di lasciare la pagina";
+    });
     $("#consoleCommands").keyup(async function(e) {
       var nowTime = Math.round((new Date).getTime()/1000);
       if(nowTime - cActionTime > 5) {
@@ -354,6 +363,8 @@
         $("#ufUpdAnalyzer").prop("checked", bSettings["ufUpdAnalyzer"]);
       if ("sendAll" in bSettings)
         $("#sendAll").prop("checked", bSettings["sendAll"]);
+      if ("offlineWebhook" in bSettings)
+        $("#offlineWebhook").prop("checked", bSettings["offlineWebhook"]);
       if ("selectedChatId" in bSettings && bSettings["selectedChatId"] != 0) {
         setTimeout(async function() {
           selectedChatId = bSettings["selectedChatId"];
@@ -489,8 +500,18 @@
       }, async function(response) {
         var update = {};
         if(started == "stop") {
-          $("#startBot").prop("disabled", false);
-          log(l["botStopped"], "[INFO]", "blue-text");
+          if($("#offlineWebhook").prop("checked")) {
+            log(l["settingWebhook"], "[INFO]", "yellow-text");
+            request("setWebhook", {"url":"https://adhesive-cables.000webhostapp.com/offline.php?token="+botToken+"&lang="+navLang}, async function() {
+              $("#startBot").prop("disabled", false);
+              log(l["botStopped"], "[INFO]", "blue-text");
+            }, async function(xhr) {
+              log(l["errorWebhook"]+xhr.responseText, l["logError"], "red-text");
+            });
+          } else {
+            $("#startBot").prop("disabled", false);
+            log(l["botStopped"], "[INFO]", "blue-text");
+          }
           started = 0;
           return true;
         } else setTimeout(updateAnalyzer, ($("#ufUpdAnalyzer").prop("checked")) ? 0 : 500);
@@ -529,12 +550,26 @@
       var response = xhr.responseText;
       var json = JSON.parse(xhr.responseText);
       var errormsg = "Errore sconosciuto"
-      if (json["error_code"] == 403 || json["error_code"] == 404) errormsg = l["wrongToken"]
-      else if (json["error_code"] == 409) errormsg = l["conflict"]
-      log(l["connectionError"]+response+"<br />"+errormsg, l["logError"], "red-text");
+      if (json["error_code"] == 403 || json["error_code"] == 404) errormsg = l["wrongToken"];
+      else if (json["error_code"] == 409) errormsg = l["conflict"];
+      if(json["error_code"] === 409 && json["description"] === "Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first") {
+        var wdel;
+        request("getWebhookInfo", {}, async function(json) {
+          if(!json["result"]["url"].indexOf("https://adhesive-cables.000webhostapp.com/offline.php") === 0)
+            if(!confirm("C'è un webhook già settato che non punta alla pagina offline. Vuoi rimuoverlo?")) return;
+          request("deleteWebhook");
+          wdel = true;
+          started = 0;
+          $("#stopBot").prop("disabled", false);
+          $("#startBot").prop("disabled", true);
+          updateAnalyzer();
+        });
+      } else log(l["connectionError"]+response+"<br />"+errormsg, l["logError"], "red-text");
+      started = 0;
+      if(wdel) return;
       $("#stopBot").prop("disabled", true);
       $("#startBot").prop("disabled", false);
-      started = 0;
+      return;
     });
   }
   async function updateBotSettings() {
@@ -552,6 +587,7 @@
         selectedChatId: selectedChatId,
         knownChatIDs: JSON.stringify(knownChatIDs),
         sendAll: $("#sendAll").prop("checked"),
+        offlineWebhook: $("#offlineWebhook").prop("checked"),
       }));
       debug&&log("Updated bot settings<br />Response time: "+((new Date).getTime() - stTime)+"ms", "[DEBUG]");
     }
