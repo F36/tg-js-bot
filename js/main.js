@@ -1,5 +1,5 @@
 "use strict";
-(function() {
+(function(){
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -163,7 +163,7 @@
       "removeChatId": "Remove selection",
       "commandsHelpTr": '/command > Answer<strong>;</strong> (if you have to use the semicolon, then return, put a \\ before ;. Example: <code>/start > Hello\\;;</code>, it will send Hello;)<br>\
       In the answer, you can use <strong>photo</strong> followed by <strong>file_id/url</strong> (to put the caption to a photo, start a new line) to send a photo, or a simple text to send a textual answer.<br>\
-      Will be added new types of documents/videos soon<br>\
+      Will be added new types of documents/videos soon (I\'m too lazy to do it now.)<br>\
       To get a photo file_id, send a photo to your active bot with caption /fileid\
       <br><br>\
       In the textual answer or caption you can use these codes:<br>\
@@ -387,10 +387,12 @@
       if(photo) {
         commandArr[1] = splitTwo(commandArr[1], "photo ")[1];
         var caption = "";
-        if(commandArr[1].indexOf("\n") -1 < commandArr[1].length &&
-        ((caption = splitTwo(commandArr[1], "\n")[1]) !== lastLine && lastLine.indexOf("[[[") === -1)) {
+        if(commandArr[1].indexOf("\n") !== -1 &&
+        ((caption = splitTwo(commandArr[1], "\n")[1]) && caption.indexOf("[[[") === -1 && caption.indexOf("(((") === -1) || caption !== lastLine) {
           commandArr[1] = splitTwo(commandArr[1], caption)[0];
-        }
+          caption = caption.substring(0, caption.lastIndexOf("\n"));
+          console.log(lastLine, caption);
+        } else caption = "";
       }
       var keyboard = null;
       if(lastLine.indexOf("[[[") === 0) {
@@ -452,9 +454,9 @@
         commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
       }
       if(commandArr[0] in commands)
-        commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption] : [commandArr[1], "text", keyboard]));
+        commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption, keyboard] : [commandArr[1], "text", keyboard]));
       else 
-        commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption]] : [[commandArr[1], "text", keyboard]];
+        commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption, keyboard]] : [[commandArr[1], "text", keyboard]];
     }
     localStorage.setItem("commands", $("#commands").val());
     if(doLog) log(l["updatedCommands"], "[INFO]", "green-text");
@@ -578,7 +580,7 @@
     } else chat_name = name;
     if ("text" in message) {
       text = message["text"]
-      if(text.charAt(0) == "/")
+      if(text.charAt(0) == "/" && text.indexOf("@"+botUsername) !== -1)
         ptext = text.replace("@"+botUsername, "");
       else
         ptext = text;
@@ -588,6 +590,45 @@
       (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: maxPhotoSize }, async function(response) {
         var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
         log("<span class=\"sentImg\"><img src=\""+photoUrl+"\"><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      }, async function(xhr) {
+        if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
+      });
+      text = "";
+    } else if ("video" in message) {
+      var caption = message["caption"];
+      var file_id = message["video"]["file_id"];
+      (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: file_id }, async function(response) {
+        var video = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
+        log("<span class=\"sentImg\"><video src=\""+video+"\" controls></video><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      }, async function(xhr) {
+        if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
+      });
+      text = "";
+    } else if ("sticker" in message) {
+      var file_id = message["sticker"]["file_id"];
+      (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: file_id }, async function(response) {
+        var sticker = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
+        log("Sticker: <span class=\"sentImg\"><img class=\"sticker\" src=\""+sticker+"\"><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      }, async function(xhr) {
+        if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
+      });
+      text = "";
+    } else if ("voice" in message) {
+      var caption = message["caption"];
+      var file_id = message["voice"]["file_id"];
+      (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: file_id }, async function(response) {
+        var audio = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
+        log("<span class=\"sentImg\"><audio src=\""+audio+"\" controls></audio><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
+      }, async function(xhr) {
+        if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
+      });
+      text = "";
+    } else if ("video_note" in message) {
+      var caption = message["caption"];
+      var file_id = message["video_note"]["file_id"];
+      (selectedChatId == chat_id || $("#logAllMsg").prop("checked")) && request("getFile", { file_id: file_id }, async function(response) {
+        var video = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
+        log("<span class=\"sentImg\"><video class=\"video_note\" src=\""+video+"\" controls></video><br>"+(caption ? caption : "")+"</span>", "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
       }, async function(xhr) {
         if(xhr.responseText) log(xhr.responseText, l["logError"], "red-text")
       });
@@ -654,7 +695,27 @@
       (diffTime.getHours()-1 + l["hours"] + diffTime.getMinutes() + l["minutes"] + diffTime.getSeconds() + l["seconds"])
     ];
     if(caption == "/fileid") {
-      sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", {}, false, "HTML");
+      sendMessage(chat_id, "FileID: <code>" + maxPhotoSize + "</code>", null, false, "HTML");
+    }
+    if(ptext === "/fileid") {
+      if("reply_to_message" in message) {
+        var reply = message["reply_to_message"];
+        if("photo" in reply)
+          var file_id = reply["photo"][(message["photo"].length - 1)]["file_id"];
+        else if("video" in reply)
+          var file_id = reply["video"]["file_id"];
+        else if("voice" in reply)
+          var file_id = reply["voice"]["file_id"];
+        else if("video_note" in reply)
+          var file_id = reply["video_note"]["file_id"];
+        else if("audio" in reply)
+          var file_id = reply["audio"]["file_id"];
+        else if("document" in reply)
+          var file_id = reply["document"]["file_id"];
+        else
+          var file_id = "Not available or not compatible";
+        sendMessage(chat_id, "File ID: <code>"+file_id+"</code>", null, false, "HTML");
+      }
     }
     if(ptext in commands && ptext != "") {
       for(var ind of commands[ptext]) {
@@ -671,18 +732,47 @@
           if(typeof data !== "undefined") {
             if(!$.isEmptyObject(reply_markup) && !("inline_keyboard" in reply_markup)) {
               debug&&log("reply_markup is not an inline keyboard and request has been sent by a button, sending a new message and deleting the existing one.", "[DEBUG]");
-              deleteMessage(chat_id, callback_query["message"]["message_id"]);
+              deleteMessage(chat_id, message["message_id"]);
+              sendMessage(chat_id, send_text, reply_markup);
+            } else if ("photo" in message) {
+              debug&&log("Message to edit is a photo. Incompatible types photo, text. Deleting previous message and sending a new one.", "[DEBUG]");
+              deleteMessage(chat_id, message["message_id"]);
               sendMessage(chat_id, send_text, reply_markup);
             } else
-              editMessageText(chat_id, send_text, callback_query["message"]["message_id"], reply_markup);
+              editMessageText(chat_id, send_text, message["message_id"], reply_markup);
           } else sendMessage(chat_id, send_text, reply_markup);
         } else if(ind[1] == "photo") {
           var caption = "";
+          var reply_markup = null;
+          var media = null;
           if(2 in ind) {
             caption = replaceArray(find, replace, ind[2]);
             debug&&log("Caption to send: "+htmlEncode(caption), "[DEBUG]");
           }
-          sendPhoto(chat_id, ind[0], caption);
+          if(3 in ind) {
+            reply_markup = ind[3];
+            reply_markup = JSON.stringify(reply_markup);
+            reply_markup = replaceArray(find, replace, reply_markup);
+            reply_markup = JSON.parse(reply_markup);
+          }
+          if(typeof data !== "undefined") {
+            if(!$.isEmptyObject(reply_markup) && !("inline_keyboard" in reply_markup)) {
+              debug&&log("reply_markup is not an inline keyboard and request has been sent by a button, sending a new message and deleting the existing one.", "[DEBUG]");
+              deleteMessage(chat_id, message["message_id"]);
+              sendPhoto(chat_id, ind[0], caption, reply_markup);
+            } else if ("text" in message) {
+              debug&&log("Message to edit is a text. Incompatible types photo, text. Deleting previous message and sending a new one.", "[DEBUG]");
+              deleteMessage(chat_id, message["message_id"]);
+              sendPhoto(chat_id, ind[0], caption, reply_markup);
+            } else {
+              media = {
+                type: "photo",
+                media: ind[0],
+                caption: caption
+              };
+              editMessageMedia(chat_id, message["message_id"], media, reply_markup);
+            }
+          } else sendPhoto(chat_id, ind[0], caption, reply_markup);
         }
       }
     }
@@ -776,7 +866,25 @@
       }, true);
     }
   }
-  async function sendPhoto(chat_id, photo, caption = "", doLog = false, parse_mode = false, disable_web_page_preview = false) {
+  async function editMessageMedia(chat_id, message_id, media, reply_markup = null, parse_mode = false) {
+    if(!parse_mode) parse_mode = $("#parseMode").val();
+    if((chat_id == undefined || chat_id == "") && !chat_id) {
+      return false;
+    } else {
+      if(!("parse_mode" in media)) media["parse_mode"] = parse_mode;
+      var args = {
+        chat_id: chat_id,
+        message_id: message_id,
+        media: JSON.stringify(media)
+      };
+      if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
+      request("editMessageMedia", args, async function() {}, async function(xhr) {
+        var response = xhr.responseText;
+        log(l["sendMessageError"]+response, l["logError"], "red-text");
+      }, true);
+    }
+  }
+  async function sendPhoto(chat_id, photo, caption = "", reply_markup = null, doLog = false, parse_mode = false, disable_web_page_preview = false) {
     if(!parse_mode) parse_mode = $("#parseMode").val();
     if(!disable_web_page_preview) disable_web_page_preview = $("#wpPreview").val();
     var args = {
@@ -786,6 +894,7 @@
       parse_mode = parse_mode,
       disable_web_page_preview: disable_web_page_preview
     };
+    if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
     request("sendPhoto", args, async function(response) {
       if(doLog) request("getFile", { file_id: photo }, async function(response) {
             var photoUrl = "https://api.telegram.org/file/bot" + botToken + "/" + response["result"]["file_path"];
