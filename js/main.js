@@ -86,7 +86,7 @@
       "emptyMessage": "Message empty.",
       "noChatSelected": "Please, before trying to send a message, use /select",
       "consoleBotNotStarted": "Before typing commands, enter the bot token. If you have already done it, make sure you've clicked the \"Start\" button",
-      "messageSent": "Message sent",
+      "messageSent": "Message sent: ",
       "logError": "[ERROR]",
       "deleteMessageError": "Can't delete message ",
       "regexpError": "Can't build keyboard: Regexp not going forward. Please update your browser or put an issue on Github.",
@@ -248,7 +248,7 @@
     consoleElem.append("<br>");
     consoleElem.scrollTop(consoleElem[0].scrollHeight - consoleElem.height());
   }
-  $(window).on("load", async function() {
+  $(document).ready(async function() {
     if (location.href.indexOf("#") != -1) {
       var hash = location.href.substr(location.href.indexOf("#")+1);
       if(hash == "debug=1") {
