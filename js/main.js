@@ -158,7 +158,8 @@
       "selectChId": "Seleziona la chat_id",
       "removeChatId": "Rimuovi selezione",
       "tr-all": "Invia tutti i messaggi",
-      "tr-random": "Messaggio casuale"
+      "tr-random": "Messaggio casuale",
+      "tr-wh": "Send a message when the bot is offline"
     },
     "en": {
       "tr-botToken": "Bot Token",
@@ -218,7 +219,8 @@
       Remove keyboard > Ok! Send again /start if you need me!<br>\
       ();</code>',
       "tr-all": "Send all messages",
-      "tr-random": "Random message"
+      "tr-random": "Random message",
+      "tr-wh": "Send a message when the bot is offline"
     }
   }
   var navLang = navigator.userLanguage || navigator.language;
@@ -254,13 +256,16 @@
         setTimeout(function(){log("DEBUG mode enabled", "[DEBUG]")}, 0);
       }
     }
-    if(navLang in translations) {
-      for(var [idelem, value] of Object.entries(translations[navLang])) {
+    function updatePage() { 
+      if(navLang in translations) {
+        for(var [idelem, value] of Object.entries(translations[navLang])) {
+          $("#"+idelem).html(value);
+        }
+      } else for(var [idelem, value] of Object.entries(translations["en"])) {
         $("#"+idelem).html(value);
       }
-    } else for(var [idelem, value] of Object.entries(translations["en"])) {
-      $("#"+idelem).html(value);
     }
+    updatePage();
     $("#applyChatId").on("click", async function() {
       sendCommand("/select "+$("#selectChatId").val());
     });
@@ -288,8 +293,9 @@
     $("#consoleCommands").blur(async function() {
       $("#consoleCommandsContainer").css("background", "#000");
     });
-    $(window).on("beforeunload", async function() {
-      if(started !== 0) return "Il bot è in esecuzione. Per favore, clicca Arresta prima di lasciare la pagina";
+    $(window).on("beforeunload", function() {
+      if(started != 0) 
+        return "Il bot è in esecuzione. Per favore, clicca Arresta prima di lasciare la pagina";
     });
     $("#consoleCommands").keyup(async function(e) {
       var nowTime = Math.round((new Date).getTime()/1000);
@@ -318,6 +324,14 @@
       started = "stop";
       $("#stopBot").prop("disabled", true);
       log(l["stopSent"], "[INFO]", "yellow-text");
+    });
+    $("#langIT").click(async function() {
+      navLang = "it-IT";
+      updatePage();
+    });
+    $("#langEN").click(async function() {
+      navLang = "en";
+      updatePage();
     });
     $("#commands").blur(async function() {
       updateCommands(true);
@@ -392,6 +406,7 @@
     $(".tooltipped").tooltip();
     $('select').formSelect();
     $(".modal").modal();
+    $(".dropdown-trigger").dropdown();
     updateCommands(false);
   });
   async function updateCommands(doLog = true) {

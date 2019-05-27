@@ -38,6 +38,12 @@
 .sentImg > img.sticker {
   max-width: 60%;
 }
+#langSel {
+  margin: 0 18px;
+}
+#language img {
+  max-width: 100%;
+}
 #consoleContainer {
   /* border: 1px solid #95a5a6; */
   background-color: #000;
