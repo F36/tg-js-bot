@@ -518,7 +518,7 @@
         if(started == "stop") {
           if($("#offlineWebhook").prop("checked")) {
             log(l["settingWebhook"], "[INFO]", "yellow-text");
-            request("setWebhook", {"url":"https://adhesive-cables.000webhostapp.com/offline.php?token="+botToken+"&lang="+navLang}, async function() {
+            request("setWebhook", {"url":"https://pato05mc.alwaysdata.net/offline.php?token="+botToken+"&lang="+navLang}, async function() {
               $("#startBot").prop("disabled", false);
               log(l["botStopped"], "[INFO]", "blue-text");
             }, async function(xhr) {
@@ -571,7 +571,7 @@
       if(json["error_code"] === 409 && json["description"] === "Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first") {
         var wdel;
         request("getWebhookInfo", {}, async function(json) {
-          if(!json["result"]["url"].indexOf("https://adhesive-cables.000webhostapp.com/offline.php") === 0)
+          if(json["result"]["url"].indexOf("https://pato05mc.alwaysdata.net/offline.php") !== 0)
             if(!confirm("C'è un webhook già settato che non punta alla pagina offline. Vuoi rimuoverlo?")) return;
           request("deleteWebhook");
           wdel = true;
