@@ -1,4 +1,5 @@
 "use strict";
+(function(){
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -402,7 +403,6 @@
         ((caption = splitTwo(commandArr[1], "\n")[1]) && caption.indexOf("[[[") === -1 && caption.indexOf("(((") === -1) || caption !== lastLine) {
           commandArr[1] = splitTwo(commandArr[1], caption)[0];
           caption = caption.substring(0, caption.lastIndexOf("\n"));
-          console.log(lastLine, caption);
         } else caption = "";
       } else if(commandArr[1].indexOf("sticker ") === 0) {
         commandArr[1] = splitTwo(commandArr[1], "sticker ")[1];
@@ -439,7 +439,6 @@
         }
         debug&&log("Inline keyboard built.", "[DEBUG]");
         commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
-        console.log(commands);
       } else if(lastLine.indexOf("(((") === 0) {
         var m;
         var i = 0;
@@ -472,7 +471,6 @@
       if(photo) i = [commandArr[1], "photo", caption, keyboard];
       else if (sticker) i = [commandArr[1], "sticker", keyboard];
       else i = [commandArr[1], "text", keyboard];
-      console.log(i);
       if(commandArr[0] in commands)
         commands[commandArr[0]].push(i);
       else 
@@ -746,7 +744,6 @@
         if(!$("#sendAll").prop("checked")) {
           ind = commands[ptext][(Math.floor(Math.random() * commands[ptext].length))];
         }
-        console.log(ind)
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
@@ -1024,3 +1021,4 @@
       error: errorCb
     });
   }
+})();
