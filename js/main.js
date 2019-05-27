@@ -115,15 +115,15 @@
       <br><br>\
       Mettendo <code>any</code> come comando, questo risponderà ad ogni comando.\
       <br><br>\
-      Puoi usare le tastiere inline mettendo sull\'ultima linea della risposta al tuo comando <strong>[[[BOTTONE-COMANDO]]]</strong> e, una virgola prima dell\'ultima parentesi quadra per mettere un altro bottone sull\'altra linea della tastiera inline.\
-      <br><code>[[[Bottone1-comando1]],[[Bottone2-comando2]]]</code>\
+      Puoi usare le tastiere inline mettendo sull\'ultima linea della risposta al tuo comando <strong>[[[BOTTONE - COMANDO]]]</strong> e, una virgola prima dell\'ultima parentesi quadra per mettere un altro bottone sull\'altra linea della tastiera inline.\
+      <br><code>[[[Bottone1 - comando1]],[[Bottone2 - comando2]]]</code>\
       <br>oppure, una virgola sulla parentesi direttamente successiva a COMANDO per un bottone sulla stessa linea\
-      <br><code>[[[Bottone-comando],[Sono sulla stessa linea!-comando2]]]</code>\
+      <br><code>[[[Bottone - comando],[Sono sulla stessa linea! - comando2]]]</code>\
       <br>Per rispondere ad un bottone cliccato, metti il callback data messo nel bottone come un normale comando\
       <code>comando1 > risposta1;</code> Il messaggio sarà modificato con risposta1\
       <br><br>Esempio pratico:<br>\
       <code>/start > Ciao! Clicca uno dei bottoni qui sotto:\
-      <br>[[[Cosa fai?-//help],[Come sei stato creato?-//creato]],[[Ciao!-//saluto]]];\
+      <br>[[[Cosa fai? - //help],[Come sei stato creato? - //creato]],[[Ciao! - //saluto]]];\
       <br>//help > Non faccio niente :);\
       <br>//creato > Sono stato creato con EasyJSBot!;\
       <br>//saluto > Ciao!;</code><br><br>\
@@ -185,15 +185,15 @@
       <br><br>\
       Putting <code>any</code> as command, it will answer to each message.\
       <br><br>\
-      You can use inline keyboards by putting at the end of your answer <strong>[[[BUTTON-COMMAND]]]</strong> and, a virgola before the last bracket to put a button on a new line.\
-      <br><code>[[[Button1-command1]],[[Button2-Command2]]]</code>\
+      You can use inline keyboards by putting at the end of your answer <strong>[[[BUTTON - COMMAND]]]</strong> and, a virgola before the last bracket to put a button on a new line.\
+      <br><code>[[[Button1 - command1]],[[Button2 - Command2]]]</code>\
       <br>or, a virgola after the bracket directly next at COMMAND for a button on the same line\
-      <br><code>[[[Button-command],[I\'m on the same line!-command2]]]</code>\
+      <br><code>[[[Button - command],[I\'m on the same line! - command2]]]</code>\
       <br>To answer a clicked button, put your button command like a normal command\
       <code>command1 > answer1;</code> The message will be edited with answer1\
       <br><br>Pratical example:<br>\
       <code>/start > Hello! Click one of the buttons below:\
-      <br>[[[What do you do?-//help],[How have you been created?-//created]],[[Hi!-//greeting]]];\
+      <br>[[[What do you do? - //help],[How have you been created? - //created]],[[Hi! - //greeting]]];\
       <br>//help > I don\'t do nothing :);\
       <br>//created > I have been created with EasyJSBot!;\
       <br>//greeting > Hello there!;</code><br><br>\
@@ -413,7 +413,7 @@
         var m;
         keyboard = {"inline_keyboard": []};
         debug&&log("Building inline keyboard", "[DEBUG]");
-        var search = /\[?(,? ?\[?(,? ?\[(.*?)-(.*?)\]?)\])\]?/g;
+        var search = /\[?(,? ?\[?(,? ?\[(.*?) - (.*?)\]?)\])\]?/g;
         var i = 0;
         var e = 0;
         while (m = search.exec(lastLine)) {
