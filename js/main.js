@@ -1,5 +1,4 @@
 "use strict";
-(function(){
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -96,7 +95,7 @@
   var translations = {
     "it-IT": {
       "commandsHelpTr": '/comando > Risposta<strong>;</strong>(se devi usare il punto e virgola, poi ritornare a capo, metti un \\ prima del ;. Esempio: <code>/start > Ciao\\;;</code>, invierà Ciao;)<br>\
-      Nella risposta, puoi usare <strong>photo</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
+      Nella risposta, puoi usare <strong>photo</strong> oppure <strong>sticker</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
       Saranno aggiunti altri tipi di documenti/video presto.<br>\
       Per ricevere il file_id di una foto, manda una foto al tuo bot con descrizione /fileid\
       <br><br>\
@@ -131,14 +130,16 @@
       <br><code>(((Ciao),(Come va?)))</code>: Ciao e Come va? saranno sulla stessa linea \
       <br><code>(((Ciao)),((Come va?)))</code>: Ciao e Come va? Saranno questa volta su linee diverse\
       <br>Facendo così, creerai una tastiera permanente, che si può rimuovere mettendo sulla risposta () che rimuoverà la tastiera\
-      <br>Oppure, per rimuoverla senza farla rimuovere nella risposta, potrai mettere ", true" alla fine delle parentesi <code>(((Ciao))), true</code> che creerà una\
-      "one time keyboard" cioè, una tastiera che verrà rimossa automaticamente al click del bottone.\
+      <br>Oppure, per nasconderla (necessiterai successivamente di rimuoverla), potrai mettere ", true" alla fine delle parentesi <code>(((Ciao))), true</code> che creerà una\
+      "one time keyboard" cioè, una tastiera che verrà nascosta automaticamente al click del bottone.\
       <br><br>Esempio pratico:<br>\
       <code>/start > Ciao, benvenuto sul bot. Clicca uno dei pulsanti:<br>\
-      (((Come sei stato creato?),(Cosa puoi fare?)),((Ciao!)));<br>\
+      (((Come sei stato creato?),(Cosa puoi fare?)),((Ciao!)),((Rimuovi la tastiera)));<br>\
       Come sei stato creato? > Sono stato creato con EasyJSBot;<br>\
       Cosa puoi fare? > Niente, sono solo di test;<br>\
-      Ciao! > Ciao!!;</code>',
+      Ciao! > Ciao!!;<br>\
+      Rimuovi la tastiera > Ok! Invia /start se hai bisogno ancora di me!<br>\
+      ();</code>',
       "tr-botToken": "Token del bot",
       "tr-botcommands": "Comandi del bot",
       "startBot": "Avvia!",
@@ -148,7 +149,9 @@
       "tr-createdby": "Creato da Pato05 <code>:)</code>",
       "tr-cmdHelpTitle": "Help comandi",
       "selectChId": "Seleziona la chat_id",
-      "removeChatId": "Rimuovi selezione"
+      "removeChatId": "Rimuovi selezione",
+      "tr-all": "Invia tutti i messaggi",
+      "tr-random": "Messaggio casuale"
     },
     "en": {
       "tr-botToken": "Bot Token",
@@ -162,7 +165,7 @@
       "selectChId": "Select the chat_id",
       "removeChatId": "Remove selection",
       "commandsHelpTr": '/command > Answer<strong>;</strong> (if you have to use the semicolon, then return, put a \\ before ;. Example: <code>/start > Hello\\;;</code>, it will send Hello;)<br>\
-      In the answer, you can use <strong>photo</strong> followed by <strong>file_id/url</strong> (to put the caption to a photo, start a new line) to send a photo, or a simple text to send a textual answer.<br>\
+      In the answer, you can use <strong>photo</strong> or <strong>sticker</strong> followed by <strong>file_id/url</strong> (to put the caption to a photo, start a new line) to send a photo, or a simple text to send a textual answer.<br>\
       Will be added new types of documents/videos soon (I\'m too lazy to do it now.)<br>\
       To get a photo file_id, send a photo to your active bot with caption /fileid\
       <br><br>\
@@ -197,14 +200,18 @@
       <br><code>(((Hello),(How are you?)))</code>: Hello and How are you? will be on the same line\
       <br><code>(((Ciao)),((Come va?)))</code>: Hello and How are you? will now be on different lines\
       <br>Doing that you\'ll create a permanent keyboard, that can be removed with () in the last line of the answer\
-      <br>Or, to remove it without doing it in the answer, if you put ", true" at the end of the brackets <code>(((Ciao))), true</code> it will create a\
-      "one time keyboard", a keyboard that will be removed when a button is clicked.\
+      <br>Or, to hide it (you will equally need to remove it after), if you put ", true" at the end of the brackets <code>(((Ciao))), true</code> it will create a\
+      "one time keyboard", a keyboard that will be hided when a button is clicked.\
       <br><br>Pratical example:<br>\
       <code>/start > Hello, welcome to the bot. Click one of the buttons:<br>\
-      (((How have you been created?),(What can you do?)),((Hello!)));<br>\
+      (((How have you been created?),(What can you do?)),((Hello!)),((Remove keyboard)));<br>\
       How have you been created? > I\'ve been created with EasyJSBot;<br>\
       What can you do? > Nothing, I am only for testing;<br>\
-      Hello! > Hello there!!;</code>'
+      Hello! > Hello there!!;<br>\
+      Remove keyboard > Ok! Send again /start if you need me!<br>\
+      ();</code>',
+      "tr-all": "Send all messages",
+      "tr-random": "Random message"
     }
   }
   var navLang = navigator.userLanguage || navigator.language;
@@ -258,6 +265,7 @@
     $("#parseMode").on("change", updateBotSettings);
     $("#wpPreview").on("change", updateBotSettings);
     $("#ufUpdAnalyzer").on("change", updateBotSettings);
+    $("#sendAll").on("change", updateBotSettings);
     $("#consoleCommandsGo").click(function() {
       var commandI = $("#consoleCommands");
       var command = commandI.val().replace(/\\n/g, "\n")
@@ -343,6 +351,8 @@
         knownChatIDs = JSON.parse(bSettings["knownChatIDs"]);
       if ("ufUpdAnalyzer" in bSettings)
         $("#ufUpdAnalyzer").prop("checked", bSettings["ufUpdAnalyzer"]);
+      if ("sendAll" in bSettings)
+        $("#sendAll").prop("checked", bSettings["sendAll"]);
       if ("selectedChatId" in bSettings && bSettings["selectedChatId"] != 0) {
         setTimeout(async function() {
           selectedChatId = bSettings["selectedChatId"];
@@ -382,6 +392,7 @@
       if(command.charAt(0) === "\n") command = command.substr(1);
       var commandArr = splitTwo(command, " > ");
       var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
+      var sticker = false;
       var lineSplit = commandArr[1].split(/\n/g);
       var lastLine = lineSplit[lineSplit.length - 1];
       if(photo) {
@@ -393,6 +404,9 @@
           caption = caption.substring(0, caption.lastIndexOf("\n"));
           console.log(lastLine, caption);
         } else caption = "";
+      } else if(commandArr[1].indexOf("sticker ") === 0) {
+        commandArr[1] = splitTwo(commandArr[1], "sticker ")[1];
+        sticker = true;
       }
       var keyboard = null;
       if(lastLine.indexOf("[[[") === 0) {
@@ -425,6 +439,7 @@
         }
         debug&&log("Inline keyboard built.", "[DEBUG]");
         commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
+        console.log(commands);
       } else if(lastLine.indexOf("(((") === 0) {
         var m;
         var i = 0;
@@ -453,10 +468,15 @@
         debug&&log("Remove keyboard put into reply_markup", "[DEBUG]");
         commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
       }
+      var i;
+      if(photo) i = [commandArr[1], "photo", caption, keyboard];
+      else if (sticker) i = [commandArr[1], "sticker", keyboard];
+      else i = [commandArr[1], "text", keyboard];
+      console.log(i);
       if(commandArr[0] in commands)
-        commands[commandArr[0]].push((photo ? [commandArr[1], "photo", caption, keyboard] : [commandArr[1], "text", keyboard]));
+        commands[commandArr[0]].push(i);
       else 
-        commands[commandArr[0]] = photo ? [[commandArr[1], "photo", caption, keyboard]] : [[commandArr[1], "text", keyboard]];
+        commands[commandArr[0]] = [i];
     }
     localStorage.setItem("commands", $("#commands").val());
     if(doLog) log(l["updatedCommands"], "[INFO]", "green-text");
@@ -533,6 +553,7 @@
         ufUpdAnalyzer: $("#ufUpdAnalyzer").prop("checked"),
         selectedChatId: selectedChatId,
         knownChatIDs: JSON.stringify(knownChatIDs),
+        sendAll: $("#sendAll").prop("checked"),
       }));
       debug&&log("Updated bot settings<br />Response time: "+((new Date).getTime() - stTime)+"ms", "[DEBUG]");
     }
@@ -549,6 +570,7 @@
     var last_name;
     var first_name;
     var user_id = 0;
+    var diffTime;
     debug&&log("Analysing update: "+htmlEncode(JSON.stringify(update)), "[DEBUG]");
     if ("message" in update){
       message = update["message"];
@@ -671,7 +693,7 @@
         log(htmlEncode(text), "["+(is_group ? (htmlEncode(chat_title) + ": ") : "")+htmlEncode(name)+"]", ((selectedChatId == chat_id) ? "yellow-text" : "white-text"));
     }
     knownChatIDs[chat_id] = chat_name;
-    var diffTime = new Date((new Date).getTime() - startTime);
+    diffTime = new Date((new Date).getTime() - startTime);
     var find = [
       "{CHATID}",
       "{USERID}",
@@ -712,6 +734,8 @@
           var file_id = reply["audio"]["file_id"];
         else if("document" in reply)
           var file_id = reply["document"]["file_id"];
+        else if("sticker" in reply)
+          var file_id = reply["sticker"]["file_id"];
         else
           var file_id = "Not available or not compatible";
         sendMessage(chat_id, "File ID: <code>"+file_id+"</code>", null, false, "HTML");
@@ -719,6 +743,10 @@
     }
     if(ptext in commands && ptext != "") {
       for(var ind of commands[ptext]) {
+        if(!$("#sendAll").prop("checked")) {
+          ind = commands[ptext][(Math.floor(Math.random() * commands[ptext].length))];
+        }
+        console.log(ind)
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
@@ -773,11 +801,30 @@
               editMessageMedia(chat_id, message["message_id"], media, reply_markup);
             }
           } else sendPhoto(chat_id, ind[0], caption, reply_markup);
+        } else if(ind[1] == "sticker") {
+          var reply_markup = null;
+          if(2 in ind) {
+            reply_markup = ind[2];
+            reply_markup = JSON.stringify(reply_markup);
+            reply_markup = replaceArray(find, replace, reply_markup);
+            reply_markup = JSON.parse(reply_markup);
+          }
+          if(typeof data !== "undefined") {
+            deleteMessage(chat_id, message["message_id"]);
+            debug&&log("Can't edit sticker.", "[DEBUG]");
+          }
+          sendSticker(chat_id, ind[0], reply_markup);
+        }
+        if(!$("#sendAll").prop("checked")) {
+          break;
         }
       }
     }
     if("any" in commands && typeof data === "undefined") {
       for(var ind of commands["any"]) {
+        if(!$("#sendAll").prop("checked")) {
+          ind = commands["any"][(Math.floor(Math.random() * commands["any"].length))];
+        }
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
@@ -794,9 +841,61 @@
           }
           sendPhoto(chat_id, ind[0], caption);
         }
+        if(!$("#sendAll").prop("checked")) {
+          break;
+        }
       }
     }
     debug&&log("Response Time: "+((new Date).getTime() - startTime)+"ms", "[DEBUG]");
+  }
+  async function sendCommand(command) {
+    if(botToken != "" && botToken && started == 1)
+      switch(splitTwo(command, " ")[0]) {
+        case "/help":
+          log(l["helpConsoleCommands"], "");
+          break;
+        case "/select":
+          var cId = splitTwo(command, " ");
+          if (1 in cId && cId[1]) {
+            selectedChatId = cId[1];
+            if (selectedChatId == 0)
+              log(l["removedChatIdSelection"], "[INFO]", "green-text");
+            else
+              log(l["selected"]+selectedChatId+"!", "[INFO]", "green-text");
+            updateBotSettings();
+          } else {
+            if($.isEmptyObject(knownChatIDs))
+              log(l["noKnownChats"], l["logError"], "red-text");
+            else {
+              var opts = "";
+              for(var chatId in knownChatIDs) {
+                opts += "<option value=\""+chatId+"\""+((chatId == selectedChatId) ? " selected" : "")+">"+htmlEncode(knownChatIDs[chatId])+"</option>";
+              }
+              $("#selectChatId").html(opts).formSelect();
+              $("#selectChatIdModal").modal("open");
+            }
+          }
+          break;
+        default:
+          if(command.charAt(0) == "/")
+            log(l["unknownCommand"], l["logError"], "red-text");
+          else {
+            if (selectedChatId != 0) {
+              command = command.replace(/\\n/g, "\n")
+              if(command.replace(new RegExp(" ", "g"), "").length > 0)
+                if(command.length <= 4096)
+                  sendMessage(selectedChatId, command, {}, true);
+                else
+                  log(l["messageTooLong"], l["logError"], "red-text");
+              else
+                log(l["emptyMessage"], l["logError"], "red-text");
+            } else
+              log(l["noChatSelected"], l["logError"], "red-text");
+          }
+          break;
+        }
+      else
+        log(l["consoleBotNotStarted"], l["logError"], "red-text");
   }
   async function answerCallbackQuery(callback_query_id, text, show_alert) {
     var args = {
@@ -805,7 +904,6 @@
       show_alert: show_alert
     };
     request("answerCallbackQuery", args);
-
   }
   async function deleteMessage(chat_id, message_id) {
     var args = {
@@ -907,6 +1005,14 @@
       log(l["sendMessageError"]+response, l["logError"], "red-text");
     }, true);
   }
+  async function sendSticker(chat_id, sticker, reply_markup = null) {
+    var args = {
+      chat_id: chat_id,
+      sticker: sticker
+    };
+    if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
+    request("sendSticker", args);
+  }
   async function request(method, args = {}, successCb = async function() {}, errorCb = async function() {}, async = true) {
     $.ajax({
       url: "https://api.telegram.org/bot" + botToken + "/"+method,
@@ -918,53 +1024,3 @@
       error: errorCb
     });
   }
-  async function sendCommand(command) {
-    if(botToken != "" && botToken && started == 1)
-      switch(splitTwo(command, " ")[0]) {
-        case "/help":
-          log(l["helpConsoleCommands"], "");
-          break;
-        case "/select":
-          var cId = splitTwo(command, " ");
-          if (1 in cId && cId[1]) {
-            selectedChatId = cId[1];
-            if (selectedChatId == 0)
-              log(l["removedChatIdSelection"], "[INFO]", "green-text");
-            else
-              log(l["selected"]+selectedChatId+"!", "[INFO]", "green-text");
-            updateBotSettings();
-          } else {
-            if($.isEmptyObject(knownChatIDs))
-              log(l["noKnownChats"], l["logError"], "red-text");
-            else {
-              var opts = "";
-              for(var chatId in knownChatIDs) {
-                opts += "<option value=\""+chatId+"\""+((chatId == selectedChatId) ? " selected" : "")+">"+htmlEncode(knownChatIDs[chatId])+"</option>";
-              }
-              $("#selectChatId").html(opts).formSelect();
-              $("#selectChatIdModal").modal("open");
-            }
-          }
-          break;
-        default:
-          if(command.charAt(0) == "/")
-            log(l["unknownCommand"], l["logError"], "red-text");
-          else {
-            if (selectedChatId != 0) {
-              command = command.replace(/\\n/g, "\n")
-              if(command.replace(new RegExp(" ", "g"), "").length > 0)
-                if(command.length <= 4096)
-                  sendMessage(selectedChatId, command, {}, true);
-                else
-                  log(l["messageTooLong"], l["logError"], "red-text");
-              else
-                log(l["emptyMessage"], l["logError"], "red-text");
-            } else
-              log(l["noChatSelected"], l["logError"], "red-text");
-          }
-          break;
-        }
-      else
-        log(l["consoleBotNotStarted"], l["logError"], "red-text");
-  }
-})();
