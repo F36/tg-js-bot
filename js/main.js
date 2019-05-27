@@ -224,7 +224,7 @@
     }
   }
   var navLang = navigator.userLanguage || navigator.language;
-  var l = logTranslations[navLang] || logTranslations["en"];
+  var l;
   function splitTwo (str, by) {
     var arr = str.split(by);
     str = str.substr(arr[0].length + by.length);
@@ -257,6 +257,7 @@
       }
     }
     function updatePage() { 
+      l = logTranslations[navLang] || logTranslations["en"];
       if(navLang in translations) {
         for(var [idelem, value] of Object.entries(translations[navLang])) {
           $("#"+idelem).html(value);
