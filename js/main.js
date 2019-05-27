@@ -468,7 +468,7 @@
         commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
       }
       var i;
-      if(photo) i = [commandArr[1], "photo", caption, keyboard];
+      if(photo) i = [commandArr[1], "photo", keyboard, caption];
       else if (sticker) i = [commandArr[1], "sticker", keyboard];
       else i = [commandArr[1], "text", keyboard];
       if(commandArr[0] in commands)
@@ -741,14 +741,15 @@
     }
     if(ptext in commands && ptext != "") {
       for(var ind of commands[ptext]) {
+        var reply_markup = null;
         if(!$("#sendAll").prop("checked")) {
           ind = commands[ptext][(Math.floor(Math.random() * commands[ptext].length))];
+          reply_markup = commands[ptext][0][2];
         }
         if(ind[1] == "text") {
           var send_text = replaceArray(find, replace, ind[0]);
           debug&&log("Text to send: "+htmlEncode(send_text), "[DEBUG]");
-          var reply_markup = null;
-          if(2 in ind) {
+          if(2 in ind && ind[2]) {
             reply_markup = ind[2];
             reply_markup = JSON.stringify(reply_markup);
             reply_markup = replaceArray(find, replace, reply_markup);
@@ -763,18 +764,21 @@
               debug&&log("Message to edit is a photo. Incompatible types photo, text. Deleting previous message and sending a new one.", "[DEBUG]");
               deleteMessage(chat_id, message["message_id"]);
               sendMessage(chat_id, send_text, reply_markup);
+            } else if ("sticker" in message) {
+              debug&&log("Message to edit is a sticker. Incompatible types sticker, text. Deleting previous message and sending a new one.", "[DEBUG]");
+              deleteMessage(chat_id, message["message_id"]);
+              sendMessage(chat_id, send_text, reply_markup);
             } else
               editMessageText(chat_id, send_text, message["message_id"], reply_markup);
           } else sendMessage(chat_id, send_text, reply_markup);
         } else if(ind[1] == "photo") {
           var caption = "";
-          var reply_markup = null;
           var media = null;
-          if(2 in ind) {
+          if(3 in ind) {
             caption = replaceArray(find, replace, ind[2]);
             debug&&log("Caption to send: "+htmlEncode(caption), "[DEBUG]");
           }
-          if(3 in ind) {
+          if(2 in ind && ind[2]) {
             reply_markup = ind[3];
             reply_markup = JSON.stringify(reply_markup);
             reply_markup = replaceArray(find, replace, reply_markup);
@@ -789,6 +793,10 @@
               debug&&log("Message to edit is a text. Incompatible types photo, text. Deleting previous message and sending a new one.", "[DEBUG]");
               deleteMessage(chat_id, message["message_id"]);
               sendPhoto(chat_id, ind[0], caption, reply_markup);
+            } else if ("sticker" in message) {
+              debug&&log("Message to edit is a sticker. Incompatible types photo, sticker. Deleting previous message and sending a new one.", "[DEBUG]");
+              deleteMessage(chat_id, message["message_id"]);
+              sendMessage(chat_id, send_text, reply_markup);
             } else {
               media = {
                 type: "photo",
@@ -799,8 +807,7 @@
             }
           } else sendPhoto(chat_id, ind[0], caption, reply_markup);
         } else if(ind[1] == "sticker") {
-          var reply_markup = null;
-          if(2 in ind) {
+          if(2 in ind && ind[2]) {
             reply_markup = ind[2];
             reply_markup = JSON.stringify(reply_markup);
             reply_markup = replaceArray(find, replace, reply_markup);
