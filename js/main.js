@@ -1,10 +1,10 @@
 "use strict";
-(function(){
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
   var cookies = localStorage;
   var commands = {};
+  var variables = {};
   var started = 0;
   var selectedChatId = 0;
   var lastCommand = "";
@@ -249,9 +249,9 @@
     consoleElem.scrollTop(consoleElem[0].scrollHeight - consoleElem.height());
   }
   $(document).ready(async function() {
-    if (location.href.indexOf("#") != -1) {
-      var hash = location.href.substr(location.href.indexOf("#")+1);
-      if(hash == "debug=1") {
+    if (location.href.indexOf("#") !== -1) {
+      var hash = location.hash;
+      if(hash == "#debug=1") {
         debug = true;
         setTimeout(function(){log("DEBUG mode enabled", "[DEBUG]")}, 0);
       }
@@ -279,6 +279,7 @@
     $("#wpPreview").on("change", updateBotSettings);
     $("#ufUpdAnalyzer").on("change", updateBotSettings);
     $("#sendAll").on("change", updateBotSettings);
+    $("#offlineWebhook").on("change", updateBotSettings);
     $("#consoleCommandsGo").click(function() {
       var commandI = $("#consoleCommands");
       var command = commandI.val().replace(/\\n/g, "\n")
@@ -288,8 +289,6 @@
     });
     $("#consoleCommands").focus(async function() {
       $("#consoleCommandsContainer").css("background", "rgb(15, 15, 15)");
-    });
-    $("#consoleCommands").keyup(async function() {
     });
     $("#consoleCommands").blur(async function() {
       $("#consoleCommandsContainer").css("background", "#000");
@@ -418,90 +417,104 @@
     var c = commandsString.split(/(?<!\\); *$/gm);
     for(var command of c) {
       if(command.charAt(0) === "\n") command = command.substr(1);
-      var commandArr = splitTwo(command, " > ");
-      var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
-      var sticker = false;
-      var lineSplit = commandArr[1].split(/\n/g);
-      var lastLine = lineSplit[lineSplit.length - 1];
-      if(photo) {
-        commandArr[1] = splitTwo(commandArr[1], "photo ")[1];
-        var caption = "";
-        if(commandArr[1].indexOf("\n") !== -1 &&
-        ((caption = splitTwo(commandArr[1], "\n")[1]) && caption.indexOf("[[[") === -1 && caption.indexOf("(((") === -1) || caption !== lastLine) {
-          commandArr[1] = splitTwo(commandArr[1], caption)[0];
-          caption = caption.substring(0, caption.lastIndexOf("\n"));
-        } else caption = "";
-      } else if(commandArr[1].indexOf("sticker ") === 0) {
-        commandArr[1] = splitTwo(commandArr[1], "sticker ")[1];
-        sticker = true;
+      var replaced = command.replace(/^(\$[A-Za-z0-9_]+) = (.+?)$/s, function($1, $2, $3) {
+        variables[$2] = $3;
+        return "";
+      });
+      if(replaced !== "" && command.indexOf(" > ") !== -1) {
+        var commandArr = splitTwo(command, " > ");
+        commandArr[1] = commandArr[1].replace(/\$[A-Za-z0-9_]+/g, function($1) {
+          return ($1 in variables) ? variables[$1] : $1;
+        });
+        var photo = (commandArr[1].indexOf("photo ") == 0) ? true : false;
+        var sticker = false;
+        var lineSplit = commandArr[1].split(/\n/g);
+        var lastLine = lineSplit[lineSplit.length - 1];
+        if(photo) {
+          commandArr[1] = splitTwo(commandArr[1], "photo ")[1];
+          console.log(commandArr[1]);
+          var caption = "";
+          if(commandArr[1].indexOf("\n") !== -1 &&
+          ((caption = splitTwo(commandArr[1], "\n")[1]) !== "" &&
+           ((caption.indexOf("[[[") === -1 && 
+           caption.indexOf("(((") === -1)) || 
+           caption !== lastLine)) {
+            commandArr[1] = splitTwo(commandArr[1], caption)[0];
+            console.log(caption, commandArr[1]);
+            caption = caption.substring(0, caption.lastIndexOf("\n"));
+          } else caption = "";
+        } else if(commandArr[1].indexOf("sticker ") === 0) {
+          commandArr[1] = splitTwo(commandArr[1], "sticker ")[1];
+          sticker = true;
+        }
+        var keyboard = null;
+        if(lastLine.indexOf("[[[") === 0) {
+          var m;
+          keyboard = {"inline_keyboard": []};
+          debug&&log("Building inline keyboard", "[DEBUG]");
+          var search = /\[?(,? ?\[?(,? ?\[(.*?) - (.*?)\]?)\])\]?/g;
+          var i = 0;
+          var e = 0;
+          while (m = search.exec(lastLine)) {
+            var pushArr;
+            if(m[4].indexOf("https://") === 0 || m[4].indexOf("http://") === 0 || m[4].indexOf("tg://") === 0) {
+              pushArr = {text:m[3],url:m[4]};
+            } else {
+              pushArr = {text:m[3],callback_data:m[4]};
+            }
+            debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
+            e++
+            if(e > 1 && search.lastIndex < e) {
+              log(l["regexpError"], l["critError"], "red-text");
+              alert(l["critError"]+" "+l["regexpError"]);
+              return;
+            }
+            if(m[1].indexOf(", [[") === 0 || m[1].indexOf(",[[") === 0 || m[1].indexOf("[[") === 0) {
+              keyboard["inline_keyboard"].push([pushArr]);
+              i++;
+            } else {
+              keyboard["inline_keyboard"][i-1].push(pushArr);
+            }
+          }
+          debug&&log("Inline keyboard built.", "[DEBUG]");
+          commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
+        } else if(lastLine.indexOf("(((") === 0) {
+          var m;
+          var i = 0;
+          keyboard = {"keyboard": []};
+          debug&&log("Building traditional keyboard", "[DEBUG]");
+          var search = /\(?(,? ?\(?(,? ?\((.*?)\)?)\))\)?/g;
+          while (m = search.exec(lastLine)) {
+            var pushArr = {text:m[3]};
+            debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
+            if(m[1].indexOf(", ((") === 0 || m[1].indexOf(",((") === 0 || m[1].indexOf("((") === 0) {
+              keyboard["keyboard"].push([pushArr]);
+              i++;
+            } else {
+              keyboard["keyboard"][i-1].push(pushArr);
+            }
+          }
+          if(lastLine.endsWith(",true") || lastLine.endsWith(", true")) {
+            keyboard["one_time_keyboard"] = true;
+            debug&&log("One time keyboard detected");
+          }
+          debug&&log("Keyboard built.", "[DEBUG]");
+          commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
+        } else if(lastLine.indexOf("()") === 0) {
+          var m;
+          keyboard = {"remove_keyboard": true};
+          debug&&log("Remove keyboard put into reply_markup", "[DEBUG]");
+          commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
+        }
+        var i;
+        if(photo) i = [commandArr[1], "photo", keyboard, caption];
+        else if (sticker) i = [commandArr[1], "sticker", keyboard];
+        else i = [commandArr[1], "text", keyboard];
+        if(commandArr[0] in commands)
+          commands[commandArr[0]].push(i);
+        else 
+          commands[commandArr[0]] = [i];
       }
-      var keyboard = null;
-      if(lastLine.indexOf("[[[") === 0) {
-        var m;
-        keyboard = {"inline_keyboard": []};
-        debug&&log("Building inline keyboard", "[DEBUG]");
-        var search = /\[?(,? ?\[?(,? ?\[(.*?) - (.*?)\]?)\])\]?/g;
-        var i = 0;
-        var e = 0;
-        while (m = search.exec(lastLine)) {
-          var pushArr;
-          if(m[4].indexOf("https://") === 0 || m[4].indexOf("http://") === 0 || m[4].indexOf("tg://") === 0) {
-            pushArr = {text:m[3],url:m[4]};
-          } else {
-            pushArr = {text:m[3],callback_data:m[4]};
-          }
-          debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
-          e++
-          if(e > 1 && search.lastIndex < e) {
-            log(l["regexpError"], l["critError"], "red-text");
-            alert(l["critError"]+" "+l["regexpError"]);
-            return;
-          }
-          if(m[1].indexOf(", [[") === 0 || m[1].indexOf(",[[") === 0 || m[1].indexOf("[[") === 0) {
-            keyboard["inline_keyboard"].push([pushArr]);
-            i++;
-          } else {
-            keyboard["inline_keyboard"][i-1].push(pushArr);
-          }
-        }
-        debug&&log("Inline keyboard built.", "[DEBUG]");
-        commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
-      } else if(lastLine.indexOf("(((") === 0) {
-        var m;
-        var i = 0;
-        keyboard = {"keyboard": []};
-        debug&&log("Building traditional keyboard", "[DEBUG]");
-        var search = /\(?(,? ?\(?(,? ?\((.*?)\)?)\))\)?/g;
-        while (m = search.exec(lastLine)) {
-          var pushArr = {text:m[3]};
-          debug&&log("Pushing <code>"+JSON.stringify(pushArr)+"</code> into the keyboard array.", "[DEBUG]");
-          if(m[1].indexOf(", ((") === 0 || m[1].indexOf(",((") === 0 || m[1].indexOf("((") === 0) {
-            keyboard["keyboard"].push([pushArr]);
-            i++;
-          } else {
-            keyboard["keyboard"][i-1].push(pushArr);
-          }
-        }
-        if(lastLine.endsWith(",true") || lastLine.endsWith(", true")) {
-          keyboard["one_time_keyboard"] = true;
-          debug&&log("One time keyboard detected");
-        }
-        debug&&log("Keyboard built.", "[DEBUG]");
-        commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
-      } else if(lastLine.indexOf("()") === 0) {
-        var m;
-        keyboard = {"remove_keyboard": true};
-        debug&&log("Remove keyboard put into reply_markup", "[DEBUG]");
-        commandArr[1] = commandArr[1].substring(0, commandArr[1].lastIndexOf("\n"));
-      }
-      var i;
-      if(photo) i = [commandArr[1], "photo", keyboard, caption];
-      else if (sticker) i = [commandArr[1], "sticker", keyboard];
-      else i = [commandArr[1], "text", keyboard];
-      if(commandArr[0] in commands)
-        commands[commandArr[0]].push(i);
-      else 
-        commands[commandArr[0]] = [i];
     }
     localStorage.setItem("commands", $("#commands").val());
     if(doLog) log(l["updatedCommands"], "[INFO]", "green-text");
@@ -556,7 +569,7 @@
             ];
             var replace = [
               htmlEncode(botInfo["first_name"]),
-              "<a href=\"https://t.me/"+botUsername+"\">@"+botUsername+"</a>"
+              "<a href=\"tg://resolve?domain="+botUsername+"\">@"+botUsername+"</a>"
             ]
             log(replaceArray(find, replace, l["botInfo"]));
           });
@@ -827,11 +840,11 @@
           var caption = "";
           var media = null;
           if(3 in ind) {
-            caption = replaceArray(find, replace, ind[2]);
+            caption = replaceArray(find, replace, ind[3]);
             debug&&log("Caption to send: "+htmlEncode(caption), "[DEBUG]");
           }
           if(2 in ind && ind[2]) {
-            reply_markup = ind[3];
+            reply_markup = ind[2];
             reply_markup = JSON.stringify(reply_markup);
             reply_markup = replaceArray(find, replace, reply_markup);
             reply_markup = JSON.parse(reply_markup);
@@ -848,7 +861,7 @@
             } else if ("sticker" in message) {
               debug&&log("Message to edit is a sticker. Incompatible types photo, sticker. Deleting previous message and sending a new one.", "[DEBUG]");
               deleteMessage(chat_id, message["message_id"]);
-              sendMessage(chat_id, send_text, reply_markup);
+              sendPhoto(chat_id, ind[0], caption, reply_markup);
             } else {
               media = {
                 type: "photo",
@@ -1045,7 +1058,7 @@
       chat_id: chat_id,
       photo: photo,
       caption: caption,
-      parse_mode = parse_mode,
+      parse_mode: parse_mode,
       disable_web_page_preview: disable_web_page_preview
     };
     if(reply_markup) args["reply_markup"] = JSON.stringify(reply_markup);
@@ -1080,4 +1093,3 @@
       error: errorCb
     });
   }
-})();
