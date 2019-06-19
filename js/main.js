@@ -1,4 +1,17 @@
+/*
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 "use strict";
+(function() {
   var botToken = "";
   var updateOffset = -1;
   var updateAnalyzer;
@@ -11,6 +24,7 @@
   var botUsername = "";
   var knownChatIDs = {};
   var botInfo;
+  var a;
   var debug = false;
   var startTime = 0;
   var cActionTime = 0;
@@ -146,7 +160,10 @@
       Cosa puoi fare? > Niente, sono solo di test;<br>\
       Ciao! > Ciao!!;<br>\
       Rimuovi la tastiera > Ok! Invia /start se hai bisogno ancora di me!<br>\
-      ();</code>',
+      ();</code>\
+      <br>Puoi usare anche le variabili: si dichiarano con $variabile = valore; Ex: <code>$saluto = Ciao!;</code>, e si possono usare dove\
+      vuoi nella risposta, come keyboard inline, come keyboard tradizionali, ecc. <br>\
+      I nomi delle variabili possono contenere i caratteri 0-9, A-Z, a-z e _. Qualsiasi altro carattere non è accettato e la variabile verrà ignorata.',
       "tr-botToken": "Token del bot",
       "tr-botcommands": "Comandi del bot",
       "startBot": "Avvia!",
@@ -217,7 +234,10 @@
       What can you do? > Nothing, I am only for testing;<br>\
       Hello! > Hello there!!;<br>\
       Remove keyboard > Ok! Send again /start if you need me!<br>\
-      ();</code>',
+      ();</code>\
+      <br>You can use variables: you can declare them by $variable = value; Ex: <code>$greeting = Hello!;</code>, and you can use them everywhere\
+      in the command response, as inline keyboard, as traditional keyboard, etc. <br>\
+      Variable names can contain the characters 0-9, A-Z, a-z and _. If you use every other character, the variable will be ignored.',
       "tr-all": "Send all messages",
       "tr-random": "Random message",
       "tr-wh": "Send a message when the bot is offline"
@@ -531,7 +551,7 @@
         if(started == "stop") {
           if($("#offlineWebhook").prop("checked")) {
             log(l["settingWebhook"], "[INFO]", "yellow-text");
-            request("setWebhook", {"url":"https://pato05mc.alwaysdata.net/offline.php?token="+botToken+"&lang="+navLang}, async function() {
+            request("setWebhook", {"url":"https://pato05mc.alwaysdata.net/offline.php?token="+botToken+"&lang="+navLang+'&d='+a}, async function() {
               $("#startBot").prop("disabled", false);
               log(l["botStopped"], "[INFO]", "blue-text");
             }, async function(xhr) {
@@ -1093,3 +1113,4 @@
       error: errorCb
     });
   }
+})();
