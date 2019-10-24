@@ -26,9 +26,9 @@
   var botInfo;
   var a;
   var debug = false;
-  var startTime = 0;
   var cActionTime = 0;
   var startTime = (new Date).getTime();
+  const whUrl = 'https://easyjsbot.pato05mc.tk/offline.php';
   var logTranslations = {
     "it-IT": {
       "startingBot": "Avviando il bot... Connessione in corso ai server telegram...",
@@ -268,6 +268,16 @@
     consoleElem.append("<br>");
     consoleElem.scrollTop(consoleElem[0].scrollHeight - consoleElem.height());
   }
+  function updatePage() { 
+    l = logTranslations[navLang] || logTranslations["en"];
+    if(navLang in translations) {
+      for(var [idelem, value] of Object.entries(translations[navLang])) {
+        $("#"+idelem).html(value);
+      }
+    } else for(var [idelem, value] of Object.entries(translations["en"])) {
+      $("#"+idelem).html(value);
+    }
+  }
   $(document).ready(async function() {
     if (location.href.indexOf("#") !== -1) {
       var hash = location.hash;
@@ -276,17 +286,6 @@
         setTimeout(function(){log("DEBUG mode enabled", "[DEBUG]")}, 0);
       }
     }
-    function updatePage() { 
-      l = logTranslations[navLang] || logTranslations["en"];
-      if(navLang in translations) {
-        for(var [idelem, value] of Object.entries(translations[navLang])) {
-          $("#"+idelem).html(value);
-        }
-      } else for(var [idelem, value] of Object.entries(translations["en"])) {
-        $("#"+idelem).html(value);
-      }
-    }
-    updatePage();
     $("#applyChatId").on("click", async function() {
       sendCommand("/select "+$("#selectChatId").val());
     });
@@ -428,13 +427,23 @@
     $(".modal").modal();
     $(".dropdown-trigger").dropdown();
     updateCommands(false);
+    updatePage();
+    secCheck();
   });
   async function updateCommands(doLog = true) {
     $("#updateCommands").prop("disabled", true);
     if(doLog) log(l["updatingCommands"], "[INFO]", "yellow-text");
     commands = {};
     var commandsString = $("#commands").val();
-    var c = commandsString.split(/(?<!\\); *$/gm);
+    var c = commandsString.split(/; *$/gm);
+    var t = [];
+    var k = 0;
+    while(k !== c.length-1) {
+      c[k].endsWith('\\')&&t.push(c[k].substr(0,c[k].length-1)+c[k+1])&&k++||t.push(c[k]);
+      k++;
+    }
+    c = t;
+    t = undefined;
     for(var command of c) {
       if(command.charAt(0) === "\n") command = command.substr(1);
       var replaced = command.replace(/^(\$[A-Za-z0-9_]+) = (.+?)$/s, function($1, $2, $3) {
@@ -551,7 +560,7 @@
         if(started == "stop") {
           if($("#offlineWebhook").prop("checked")) {
             log(l["settingWebhook"], "[INFO]", "yellow-text");
-            request("setWebhook", {"url":"https://pato05mc.alwaysdata.net/offline.php?token="+botToken+"&lang="+navLang+'&d='+a}, async function() {
+            request("setWebhook", {"url":whUrl+"?token="+botToken+"&lang="+navLang+'&d='+a}, async function() {
               $("#startBot").prop("disabled", false);
               log(l["botStopped"], "[INFO]", "blue-text");
             }, async function(xhr) {
@@ -993,6 +1002,27 @@
       show_alert: show_alert
     };
     request("answerCallbackQuery", args);
+  }
+  async function secCheck() {
+    $.ajax({
+      url: 'https://easyjsbot.pato05mc.tk/protectedtransfer.php',
+      async: true,
+      method: "POST",
+      data: {'url': document.location.href},
+      dataType: "json",
+      success: res => {
+        const notRealVersion = {
+          'it-IT': `<b>ATTENZIONE:</b> Questa non è la vera versione di EasyJSBot, l\'unica vera versione è <a href="${res.real}">QUESTA</a>`,
+          'en': `<b>ATTENTION:</b> This is not the real version of EasyJSBot.The only and real version is <a href="${res.real}">THIS</a>`
+        }
+        if(res.isLegit != true) {
+          $("body > main > div.container > div.card-panel").append($("<div>").html(notRealVersion[navLang] || notRealVersion['en']));
+        }
+      },
+      error: () => {
+        log('Security check failed. Please, contact @Pato05 on Telegram', '[WARNING]', 'yellow-text');
+      }
+    });
   }
   async function deleteMessage(chat_id, message_id) {
     var args = {
