@@ -4,6 +4,13 @@
 #nojs {
     display: none;
 }
+#easterEgg {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  bottom: 0;
+  right: 0;
+}
 .switch label input[type=checkbox]:checked + .lever {
   background: #42a5f5 !important;
 }
