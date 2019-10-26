@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, shrink-to-fit=no" />
     <!-- Tags for search engines -->
-    <meta name="author" content="ItzPatoo">
-    <meta name="og:title" content="Easy Telegram bot in JS">
+    <meta name="author" content="Pato05">
+    <meta name="og:title" content="EasyJSBot">
     <meta name="og:description" content="Con questo sito puoi creare facilmente un bot telegram con il semplicissimo utilizzo del tuo browser! presente anche la console per inviare messaggi e riceverli!">
     <meta name="description" content="Con questo sito puoi creare facilmente un bot telegram con il semplicissimo utilizzo del tuo browser! presente anche la console per inviare messaggi e riceverli!">
-    <meta name="application-name" content="Easy Telegram bot in JS">
-    <meta name="keywords" content="TelegramBotJS JSTelegramBot TelegramBot Telegram Bot Javascript">
+    <meta name="application-name" content="EasyJSBot">
+    <meta name="keywords" content="TelegramBotJS JSTelegramBot TelegramBot Telegram Bot EasyJSBot">
     <meta name="msvalidate.01" content="ADB52CE29F47DB2CAC8C8CA03E19D6F2" />
     <meta name="google-site-verification" content="G6L1GP4TRLb_GtzjCEp_BdXKVolnBiQQh4deUUKHyis" />
     <!-- End -->
@@ -17,16 +17,16 @@
     <!-- Tags for mobile add to home -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="TelegramJSBot">
-    <meta name="apple-mobile-web-app-title" content="TelegramJSBot">
+    <meta name="application-name" content="EasyJSBot">
+    <meta name="apple-mobile-web-app-title" content="EasyJSBot">
     <meta name="theme-color" content="#1e88e5">
     <meta name="msapplication-navbutton-color" content="#1e88e5">
     <meta name="apple-mobile-web-app-status-bar-style" content="blue">
-    <meta name="msapplication-starturl" content="/tg-js-bot/">
+    <meta name="msapplication-starturl" content="/tg-js-bot/index.html">
     <link rel="manifest" href="manifest.webapp.json">
     <!-- End -->
 
-    <title>Telegram JS Easy Bot</title>
+    <title>Telegram Easy JS Bot</title>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" as="style">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="preload" as="style">
     <link rel="preload" href="css/default.min.css" as="style">
@@ -39,11 +39,15 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="css/default.min.css">
     <link rel="stylesheet" href="../css/default.css">
-    <noscript><link rel="stylesheet" href="/css/noscript.min.css"></noscript>
+    <noscript><link rel="stylesheet" href="css/noscript.min.css"></noscript>
   </head>
   <body>
     <div id="loader"></div>
-    <div id="nojs">Please enable Javascript.</div>
+    <div id="nojs">
+      Please enable Javascript because this page is useless without it, as it runs completely on Javascript.
+      <br><br>
+      Per favore, abilita Javascript perchè la pagina sarebbe inutile senza, in quanto gira completamente su esso.
+    </div>
     <main>
       <nav class="blue darken-1">
         <div class="nav-wrapper">
@@ -104,6 +108,17 @@
               <button class="btn blue waves-effect waves-light" id="updateCommands" style="display: none;">Aggiorna lista comandi</button>
               <button class="btn blue waves-effect waves-light" id="startBot">Avvia!</button>
               <button class="btn blue waves-effect waves-light" id="stopBot" disabled>Arresta</button>
+              <a href="#" class="btn blue waves-effect waves-light dropdown-trigger" data-target="dlLogs" id="downloadLogs">Scarica i log</a>
+            </div>
+          </div>
+          <div class="row" id="logOptions">
+            <div class='input-field col s12'>
+              <select id="logsVerbosity">
+                  <option value="" selected id='tr-onlymsgs'>Only messages</option>
+                  <option value="normal" id='tr-normallog'>Normal</option>
+                  <option value="debug">Debug</option>
+              </select>
+              <label for="logsVerbosity" id='lbl-logsVerbosity'>Logs Verbosity Level</label>
             </div>
           </div>
           <div class="row botSettings">
@@ -223,7 +238,11 @@
     <ul id='language' class='dropdown-content'>
         <li><a href="#" id="langIT"><img src="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/185/flag-for-italy_1f1ee-1f1f9.png"></a></li>
         <li><a href="#" id="langEN"><img src="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/185/flag-for-united-kingdom_1f1ec-1f1e7.png"></a></li>
-      </ul>
+    </ul>
+    <ul id='dlLogs' class='dropdown-content'>
+        <li><a href="#" id="downloadLogsText">Text file</a></li>
+        <li><a href="#" id="downloadLogsHTML">HTML file</a></li>
+    </ul>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" defer></script>
     <script src="../js/main.js" defer></script>
