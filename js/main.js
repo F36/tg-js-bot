@@ -14,7 +14,6 @@
 !function() {
   var botToken = "";
   var updateOffset = -1;
-  var updateAnalyzer;
   var cookies = localStorage;
   var commands = {};
   var variables = {};
@@ -31,7 +30,7 @@
   const a = document.location.href;
   const whUrl = "https://easyjsbot.pato05mc.tk/offline.php";
   var logTranslations = {
-    "it-IT": {
+    "it": {
       startingBot: "Avviando il bot... Connessione in corso ai server telegram...",
       botIsRunning: "Il bot è attivo. Clicca Arresta prima di uscire dalla pagina, per favore.",
       emptyToken: "Bot non avviato! Bot token vuoto!",
@@ -119,7 +118,7 @@
     }
   };
   var translations = {
-    "it-IT": {
+    "it": {
       commandsHelpTr:
         "/comando > Risposta<strong>;</strong>(se devi usare il punto e virgola, poi ritornare a capo, metti un \\ prima del ;. Esempio: <code>/start > Ciao\\;;</code>, invierà Ciao;)<br>\
         Nella risposta, puoi usare <strong>photo</strong> oppure <strong>sticker</strong> seguito da un <strong>file_id/url</strong> (per mettere la descrizione alla foto, vai a capo) per inviare una foto, o un semplice testo per inviare una risposta testuale.<br>\
@@ -273,7 +272,7 @@
     }
     return a;
   };
-  var navLang = navigator.userLanguage || navigator.language;
+  var navLang = (navigator.userLanguage || navigator.language).substr(0,2);
   var l;
   function splitTwo(str, by) {
     var arr = str.split(by);
@@ -765,10 +764,12 @@
             startTime = new Date().getTime();
             log("Start Time: " + startTime, "debug");
           }
-          update = response["result"][0];
-          updateOffset = update["update_id"];
-          analyzeUpdate(update);
-          updateOffset++;
+          // Telegram returns us multiple updates
+          for(let update of response['result']) {
+            updateOffset = update["update_id"];
+            analyzeUpdate(update);
+            updateOffset++;
+          }
         }
         if (started == 0) {
           localStorage.setItem("botToken", $("#token").val());
