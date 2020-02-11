@@ -768,8 +768,8 @@
           for(let update of response['result']) {
             updateOffset = update["update_id"];
             analyzeUpdate(update);
-            updateOffset++;
           }
+          updateOffset++;
         }
         if (started == 0) {
           localStorage.setItem("botToken", $("#token").val());

@@ -6,6 +6,6 @@
 #loader {
     display: none;
 }
-*:not(#nojs):not(body):not(html):not(br) {
+*:not(#nojs):not(body):not(html):not(#nojs > br) {
     display: none;
 }

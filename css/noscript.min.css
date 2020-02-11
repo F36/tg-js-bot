@@ -1,1 +1,1 @@
-#nojs{display:block;font-size:2em;text-align:center}#loader{display:none}:not(#nojs):not(body):not(html):not(br){display:none}
+#nojs{display:block;font-size:2em;text-align:center}#loader{display:none}:not(#nojs):not(body):not(html):not(#nojs>br){display:none}
