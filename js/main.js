@@ -12,21 +12,22 @@
 */
 "use strict";
 !function() {
-  var botToken = "";
-  var updateOffset = -1;
-  var cookies = localStorage;
-  var commands = {};
-  var variables = {};
-  var started = 0;
-  var selectedChatId = 0;
-  var lastCommand = "";
-  var botUsername = "";
-  var knownChatIDs = {};
-  var botInfo;
-  var debug = false;
-  var cActionTime = 0;
-  var startTime = new Date().getTime();
-  var logs = [];
+  var botToken = "",
+      updateOffset = -1,
+      cookies = localStorage,
+      commands = {},
+      variables = {},
+      started = 0,
+      selectedChatId = 0,
+      lastCommand = "",
+      botUsername = "",
+      knownChatIDs = {},
+      botInfo,
+      debug = false,
+      cActionTime = 0,
+      startTime = new Date().getTime(),
+      logs = [],
+      sec = true;
   const a = document.location.href;
   const whUrl = "https://easyjsbot.pato05mc.tk/offline.php";
   var logTranslations = {
@@ -189,7 +190,9 @@
       "tr-onlymsgs": 'Solo messaggi',
       "tr-normallog": 'Normale',
       "lbl-logsVerbosity": 'Livello di verbosità dei logs',
-      "tr-dlJS": "Tutti i livelli (solo HTML)"
+      "tr-dlJS": "Tutti i livelli (solo HTML)",
+      "tr-notAvailable": "non disponibile",
+      "donateLink": "Dona per supportarmi!"
     },
     en: {
       "tr-botToken": "Bot Token",
@@ -261,7 +264,9 @@
       "tr-onlymsgs": 'Only messages',
       "tr-normallog": 'Normal',
       "lbl-logsVerbosity": 'Logs verbosity level',
-      "tr-dlJS": "Every level (only HTML)"
+      "tr-dlJS": "Every level (only HTML)",
+      "tr-notAvailable": "not available",
+      "donateLink": "Consider donating!"
     }
   };
   // Simple functions to work easily
@@ -474,7 +479,7 @@
     });
     $("#langIT").click(async function(e) {
       e.preventDefault();
-      navLang = "it-IT";
+      navLang = "it";
       updatePage();
     });
     $("#langEN").click(async function(e) {
@@ -1365,6 +1370,10 @@
         }
       },
       error: () => {
+        sec = false;
+        $("#offlineWebhook").prop("checked", false).prop("disabled", true);
+        $("#offlineWebhook + .lever").css("margin", "0 4px 0 16px");
+        $("#tr-notAvailable").css("display", "inline-block");
         log(
           "Security check failed. Please, contact @Pato05 on Telegram",
           "warning"
